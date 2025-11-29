@@ -1,6 +1,6 @@
 import dataclasses
 
-from pfchar.char.base import CriticalBonus, Dice, Statistic
+from pfchar.char.base import CriticalBonus, Dice, Effect, Statistic
 from pfchar.char.items import Item, Weapon
 from pfchar.char.abilities import Ability
 
@@ -24,7 +24,11 @@ class Character:
     off_hand: Weapon | None = None
     items: list[Item] = dataclasses.field(default_factory=list)
     abilities: list[Ability] = dataclasses.field(default_factory=list)
+    statuses: list[Effect] = dataclasses.field(default_factory=list)
     _two_handed: bool = False
+
+    def _all_effects(self) -> list[Effect]:
+        return self.items + self.abilities + self.statuses
 
     def can_be_two_handed(self) -> bool:
         return (
@@ -55,13 +59,9 @@ class Character:
         stat = self.attack_statistic()
         modifiers[stat.value] = (self.statistics[stat] - 10) // 2
         modifiers |= {
-            item.name: item.attack_bonus(self)
-            for item in self.items
-            if item.condition(self)
-        } | {
-            ability.name: ability.attack_bonus(self)
-            for ability in self.abilities
-            if ability.condition(self)
+            effect.name: effect.attack_bonus(self)
+            for effect in self._all_effects()
+            if effect.condition(self)
         }
         return {name: value for name, value in modifiers.items() if value}
 
@@ -79,20 +79,15 @@ class Character:
         modifiers[stat.value] = [Dice(num=strength_mod)]
 
         modifiers |= {
-            item.name: item.damage_bonus(self)
-            for item in self.items
-            if item.condition(self)
-        } | {
-            ability.name: ability.damage_bonus(self)
-            for ability in self.abilities
-            if ability.condition(self)
+            effect.name: effect.damage_bonus(self)
+            for effect in self._all_effects()
+            if effect.condition(self)
         }
-
         return {name: value for name, value in modifiers.items() if value}
 
     def critical_bonus(self) -> CriticalBonus:
         bonus = self.main_hand.critical_bonus(self, None)
-        for effect in self.items + self.abilities:
+        for effect in self._all_effects():
             if effect.condition(self):
                 bonus = effect.critical_bonus(self, bonus)
 

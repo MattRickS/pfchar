@@ -4,10 +4,19 @@ from pfchar.char.base import CriticalBonus, Dice, Statistic
 from pfchar.char.character import Character
 from pfchar.char.enchantments import FlamingBurst
 from pfchar.char.items import StatisticModifyingItem, Weapon
-from pfchar.char.abilities import PowerAttack, WeaponFocus, WeaponTraining, ImprovedCritical
+from pfchar.char.abilities import (
+    PowerAttack,
+    WeaponFocus,
+    WeaponTraining,
+    ImprovedCritical,
+)
 from pfchar.char.base import WeaponType
-from pfchar.utils import crit_to_string, sum_up_dice, sum_up_modifiers
-
+from pfchar.utils import (
+    crit_to_string,
+    sum_up_dice,
+    sum_up_modifiers,
+    create_status_effect,
+)
 
 character = Character(
     name="Yoyu Tekko",
@@ -49,6 +58,7 @@ character = Character(
         )
     ],
 )
+
 
 def stat_modifier(value: int) -> int:
     return (value - 10) // 2
@@ -168,6 +178,77 @@ def render_attack_damage():
                     ui.label(f"Critical: {crit_to_string(critical_bonus)}")
 
 
+# Dialog and helpers for status effects
+status_dialog = ui.dialog()
+with status_dialog:
+    with ui.card():
+        ui.label("Add Status").style("font-weight: bold; font-size: 1.2rem")
+        status_name_input = ui.input("Name")
+        status_attack_input = ui.number("Attack Bonus", value=0)
+        status_damage_input = ui.number("Damage Bonus", value=0)
+        with ui.row():
+
+            def create_status():
+                name = status_name_input.value.strip() or "Status"
+                attack = int(status_attack_input.value or 0)
+                damage = int(status_damage_input.value or 0)
+                character.statuses.append(
+                    create_status_effect(name, attack_bonus=attack, damage_bonus=damage)
+                )
+                status_dialog.close()
+                render_statuses.refresh()
+                update_combat_sections()
+
+            ui.button("Create", on_click=create_status).props("color=primary")
+            ui.button("Cancel", on_click=lambda: status_dialog.close())
+
+
+def open_add_status_dialog():
+    status_dialog.open()
+
+
+def delete_status(index: int):
+    if 0 <= index < len(character.statuses):
+        del character.statuses[index]
+        render_statuses.refresh()
+        update_combat_sections()
+
+
+# Track expansion state of Statuses across refreshes
+STATUSES_EXPANDED = False
+
+
+def update_statuses_expansion(expanded: bool):
+    global STATUSES_EXPANDED
+    STATUSES_EXPANDED = expanded
+
+
+@ui.refreshable
+def render_statuses():
+    # use stored expansion state
+    expansion = ui.expansion(
+        "Statuses",
+        value=STATUSES_EXPANDED,
+        on_value_change=lambda e: update_statuses_expansion(e.value),
+    )
+    with expansion:
+        with ui.card():
+            ui.label("Statuses").style("font-weight: bold; font-size: 1.2rem")
+            if character.statuses:
+                for i, status in enumerate(character.statuses):
+                    with ui.row().classes("items-center"):
+                        ui.label(status.name)
+                        ui.button(
+                            icon="delete", on_click=lambda _, idx=i: delete_status(idx)
+                        ).props("flat color=red")
+            else:
+                ui.label("No statuses active")
+            ui.separator()
+            ui.button("Add Status", on_click=open_add_status_dialog).props(
+                "color=primary outline"
+            )
+
+
 def update_combat_sections():
     # re-render the computed sections
     render_attack_damage.refresh()
@@ -182,6 +263,7 @@ with ui.row():
         render_weapons()
         render_items()
         render_abilities()
+        render_statuses()
 
 render_attack_damage()
 
