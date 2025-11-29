@@ -61,6 +61,8 @@ class CustomEffect(Effect):
         bonus = super().damage_bonus(character)
         if bonus:
             bonus[0].modifier += self._damage_bonus
+        elif self._damage_bonus:
+            bonus.append(Dice(self._damage_bonus))
         return bonus
 
 
