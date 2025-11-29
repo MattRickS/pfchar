@@ -23,6 +23,10 @@ class Statistic(enum.StrEnum):
     CHARISMA = "Charisma"
 
 
+def stat_modifier(value: int) -> int:
+    return (value - 10) // 2
+
+
 @dataclasses.dataclass
 class Dice:
     num: int
@@ -56,14 +60,32 @@ class Effect:
     name: str
     condition: Condition = dataclasses.field(default_factory=NullCondition)
 
+    def statistic_bonus(self, character: "Character", statistic: Statistic) -> int:
+        return 0
+
+    def statistic_modifier_bonus(
+        self, character: "Character", statistic: Statistic, mult: float = 1.0
+    ) -> int:
+        original = character.statistics.get(statistic, 10)
+        modified = original + self.statistic_bonus(character, statistic)
+        return int((stat_modifier(modified) * mult) - (stat_modifier(original) * mult))
+
     def critical_bonus(
         self, character: "Character", critical_bonus: "CriticalBonus"
     ) -> CriticalBonus:
         return critical_bonus
 
     def attack_bonus(self, character: "Character") -> int:
-        return 0
+        statistic = character.attack_statistic()
+        return self.statistic_modifier_bonus(character, statistic)
 
     @abc.abstractmethod
     def damage_bonus(self, character: "Character") -> list[Dice]:
+        bonus = self.statistic_modifier_bonus(
+            character,
+            Statistic.STRENGTH,
+            mult=1.5 if character.is_two_handed() else 1.0,
+        )
+        if bonus:
+            return [Dice(bonus)]
         return []

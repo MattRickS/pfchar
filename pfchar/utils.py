@@ -51,26 +51,17 @@ class CustomEffect(Effect):
         self._damage_bonus = damage_bonus
         self._statistics = statistics
 
-    def _stat(self, character: "Character", stat: Statistic, mult: float = 1.0) -> int:
-        original = character.statistics.get(stat, 10)
-        modified = original + self._statistics.get(stat, 0)
-        return int((((modified - 10) // 2) * mult) - (((original - 10) // 2) * mult))
+    def statistic_bonus(self, character, statistic):
+        return self._statistics.get(statistic, 0)
 
     def attack_bonus(self, character: "Character") -> int:
-        stat = character.attack_statistic()
-        return self._attack_bonus + self._stat(character, stat)
+        return self._attack_bonus + super().attack_bonus(character)
 
     def damage_bonus(self, character: "Character") -> list[Dice]:
-        return [
-            Dice(
-                self._damage_bonus
-                + self._stat(
-                    character,
-                    Statistic.STRENGTH,
-                    mult=1.5 if character.is_two_handed() else 1.0,
-                )
-            )
-        ]
+        bonus = super().damage_bonus(character)
+        if bonus:
+            bonus[0].modifier += self._damage_bonus
+        return bonus
 
 
 def create_status_effect(

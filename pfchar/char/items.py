@@ -18,25 +18,8 @@ class StatisticModifyingItem(Item):
     name: str
     stats: dict[Statistic, int] = dataclasses.field(default_factory=dict)
 
-    def _stat(self, character: "Character", stat: Statistic, mult: float = 1.0) -> int:
-        original = character.statistics.get(stat, 10)
-        modified = original + self.stats.get(stat, 0)
-        return int((((modified - 10) // 2) * mult) - (((original - 10) // 2) * mult))
-
-    def attack_bonus(self, character: "Character") -> int:
-        stat = character.attack_statistic()
-        return self._stat(character, stat)
-
-    def damage_bonus(self, character: "Character") -> list[Dice]:
-        return [
-            Dice(
-                self._stat(
-                    character,
-                    Statistic.STRENGTH,
-                    mult=1.5 if character.is_two_handed() else 1.0,
-                )
-            )
-        ]
+    def statistic_bonus(self, character, stat):
+        return self.stats.get(stat, 0)
 
 
 @dataclasses.dataclass(kw_only=True)

@@ -1,6 +1,6 @@
 import dataclasses
 
-from pfchar.char.base import CriticalBonus, Dice, Effect, Statistic
+from pfchar.char.base import stat_modifier, CriticalBonus, Dice, Effect, Statistic
 from pfchar.char.items import Item, Weapon
 from pfchar.char.abilities import Ability
 
@@ -49,6 +49,13 @@ class Character:
     def attack_statistic(self) -> Statistic:
         return Statistic.DEXTERITY if self.main_hand.is_ranged else Statistic.STRENGTH
 
+    def modified_statistic(self, stat: Statistic) -> int:
+        original = self.statistics.get(stat, 10)
+        modified = original + sum(
+            effect.statistic_bonus(self, stat) for effect in self._all_effects()
+        )
+        return modified
+
     def attack_bonus(self) -> dict[str, int]:
         modifiers = {
             "Base Attack Bonus": self.base_attack_bonus,
@@ -57,7 +64,7 @@ class Character:
             modifiers["Weapon Enchantment"] = enchantment
 
         stat = self.attack_statistic()
-        modifiers[stat.value] = (self.statistics[stat] - 10) // 2
+        modifiers[stat.value] = stat_modifier(self.statistics[stat])
         modifiers |= {
             effect.name: effect.attack_bonus(self)
             for effect in self._all_effects()
@@ -73,7 +80,7 @@ class Character:
             modifiers[self.off_hand.name] = self.off_hand.damage_bonus(self)
 
         stat = Statistic.STRENGTH
-        strength_mod = (self.statistics[stat] - 10) // 2
+        strength_mod = stat_modifier(self.statistics[stat])
         if self._two_handed:
             strength_mod = int(strength_mod * 1.5)
         modifiers[stat.value] = [Dice(num=strength_mod)]

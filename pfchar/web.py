@@ -1,6 +1,6 @@
 from nicegui import ui
 
-from pfchar.char.base import CriticalBonus, Dice, Statistic
+from pfchar.char.base import stat_modifier, CriticalBonus, Dice, Statistic
 from pfchar.char.character import Character
 from pfchar.char.enchantments import FlamingBurst
 from pfchar.char.items import StatisticModifyingItem, Weapon
@@ -60,31 +60,38 @@ character = Character(
 )
 
 
-def stat_modifier(value: int) -> int:
-    return (value - 10) // 2
+EXPANSION = {}
 
 
+def expansion(name: str, default: bool = False):
+    return ui.expansion(
+        name,
+        value=EXPANSION.get(name, default),
+        on_value_change=lambda e: EXPANSION.update({name: e.value}),
+    )
+
+
+# Updates when statuses modify stats
+@ui.refreshable
 def render_statistics():
-    with ui.expansion("Statistics", value=False):
+    with expansion("Statistics"):
         with ui.card():
             ui.label("Statistics").style("font-weight: bold; font-size: 1.2rem")
-            for stat in [
-                Statistic.STRENGTH,
-                Statistic.DEXTERITY,
-                Statistic.CONSTITUTION,
-                Statistic.INTELLIGENCE,
-                Statistic.WISDOM,
-                Statistic.CHARISMA,
-            ]:
-                val = character.statistics.get(stat, 10)
-                mod = stat_modifier(val)
-                ui.label(f"{stat.value}: {val} ({mod:+d})")
+            for stat in Statistic:
+                value = character.statistics.get(stat, 10)
+                modifier = stat_modifier(value)
+                modified_value = character.modified_statistic(stat)
+                modified_modifier = stat_modifier(modified_value)
+                if modified_value != value:
+                    ui.label(
+                        f"{stat.value}: {value} ({modifier:+d}) -> {modified_value} ({modified_modifier:+d})"
+                    )
+                else:
+                    ui.label(f"{stat.value}: {value} ({modifier:+d})")
 
 
-# Make weapons section refreshable so it updates when toggles change
-@ui.refreshable
 def render_weapons():
-    with ui.expansion("Weapons", value=False):
+    with expansion("Weapons"):
         with ui.card():
             ui.label("Weapons").style("font-weight: bold; font-size: 1.2rem")
             ui.label(f"Base Attack Bonus: {character.base_attack_bonus:+d}")
@@ -112,7 +119,7 @@ def render_weapons():
 
 
 def render_items():
-    with ui.expansion("Items", value=False):
+    with expansion("Items"):
         with ui.card():
             ui.label("Items").style("font-weight: bold; font-size: 1.2rem")
             if character.items:
@@ -122,10 +129,8 @@ def render_items():
                 ui.label("No items equipped")
 
 
-# Make abilities section refreshable so toggles reflect immediately
-@ui.refreshable
 def render_abilities():
-    with ui.expansion("Abilities", value=False):
+    with expansion("Abilities"):
         with ui.card():
             ui.label("Abilities").style("font-weight: bold; font-size: 1.2rem")
             for ability in character.abilities:
@@ -159,7 +164,7 @@ def render_attack_damage():
     attack_total = sum(attack_mods.values())
     damage_total_str = sum_up_modifiers(damage_mods)
 
-    with ui.expansion("Combat Modifiers", value=True):
+    with expansion("Combat Modifiers", default=True):
         with ui.card():
             ui.label("Combat Modifiers").style("font-weight: bold; font-size: 1.2rem")
             with ui.row().classes("items-start"):  # two columns
@@ -233,24 +238,9 @@ def delete_status(index: int):
         update_combat_sections()
 
 
-# Track expansion state of Statuses across refreshes
-STATUSES_EXPANDED = False
-
-
-def update_statuses_expansion(expanded: bool):
-    global STATUSES_EXPANDED
-    STATUSES_EXPANDED = expanded
-
-
 @ui.refreshable
 def render_statuses():
-    # use stored expansion state
-    expansion = ui.expansion(
-        "Statuses",
-        value=STATUSES_EXPANDED,
-        on_value_change=lambda e: update_statuses_expansion(e.value),
-    )
-    with expansion:
+    with expansion("Statuses"):
         with ui.card():
             ui.label("Statuses").style("font-weight: bold; font-size: 1.2rem")
             if character.statuses:
@@ -270,6 +260,7 @@ def render_statuses():
 
 def update_combat_sections():
     # re-render the computed sections
+    render_statistics.refresh()
     render_attack_damage.refresh()
 
 
