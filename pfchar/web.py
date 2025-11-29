@@ -188,7 +188,7 @@ status_dialog = ui.dialog()
 with status_dialog:
     with ui.card():
         ui.label("Add Status").style("font-weight: bold; font-size: 1.2rem")
-        status_name_input = ui.input("Name")
+        status_name_input = ui.input("Name").props("clearable")
         status_attack_input = ui.number("Attack Bonus", value=0)
         status_damage_input = ui.number("Damage Bonus", value=0)
         # per-stat modifiers
@@ -197,10 +197,38 @@ with status_dialog:
         with ui.column():
             for stat in Statistic:
                 stat_inputs[stat] = ui.number(stat.value, value=0)
+        # warning message area
+        warn_label = ui.label("At least one non-name value is required.").style(
+            "color: #b00020"
+        )
+        warn_label.visible = False
         with ui.row():
 
             def create_status():
-                name = status_name_input.value.strip() or "Status"
+                name = (status_name_input.value or "").strip()
+                # require non-empty name
+                if not name:
+                    warn_label.visible = False
+                    status_name_input.props('error error-message="Name is required"')
+                    return
+                # check if any non-default fields are provided
+                non_default = bool(int(status_attack_input.value or 0)) or bool(
+                    int(status_damage_input.value or 0)
+                )
+                if not non_default:
+                    for inp in stat_inputs.values():
+                        try:
+                            if int(inp.value or 0) != 0:
+                                non_default = True
+                                break
+                        except Exception:
+                            continue
+                if not non_default:
+                    # show warning and block submission
+                    warn_label.visible = True
+                    return
+                warn_label.visible = False
+
                 attack = int(status_attack_input.value or 0)
                 damage = int(status_damage_input.value or 0)
                 stats_dict = {}
@@ -219,12 +247,34 @@ with status_dialog:
                         statistics=stats_dict,
                     )
                 )
+                # reset dialog inputs after successful add
+                status_name_input.value = ""
+                status_name_input.props('error=false error-message=""')
+                status_attack_input.value = 0
+                status_damage_input.value = 0
+                for inp in stat_inputs.values():
+                    inp.value = 0
                 status_dialog.close()
                 render_statuses.refresh()
                 update_combat_sections()
 
             ui.button("Create", on_click=create_status).props("color=primary")
             ui.button("Cancel", on_click=lambda: status_dialog.close())
+
+        # clear error/warning when user types or changes values
+        def clear_name_error(_):
+            status_name_input.props('error=false error-message=""')
+            warn_label.visible = False
+
+        status_name_input.on("input", clear_name_error)
+
+        def clear_warning(_):
+            warn_label.visible = False
+
+        status_attack_input.on("change", clear_warning)
+        status_damage_input.on("change", clear_warning)
+        for inp in stat_inputs.values():
+            inp.on("change", clear_warning)
 
 
 def open_add_status_dialog():
