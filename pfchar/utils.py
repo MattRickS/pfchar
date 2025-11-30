@@ -17,7 +17,7 @@ def sum_up_dice(dice_list: list[Dice]) -> str:
         else:
             modifier += dice.num + dice.modifier
 
-    string = " + ".join(values)
+    string = "+".join(values)
     if modifier:
         string += f" {modifier:+d}"
 

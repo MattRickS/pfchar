@@ -198,76 +198,59 @@ def render_combat_modifiers():
     cmd_total = sum(cmd_breakdown.values()) if cmd_breakdown else 0
 
     with expansion("Combat Modifiers", default=True):
-        with ui.card():
-            ui.label("Combat Modifiers").style("font-weight: bold; font-size: 1.2rem")
-            # Grid with 6 columns; each column: header, totals (fixed height), separator, collapsible breakdown
-            with ui.element("div").classes(
-                "grid grid-cols-1 md:grid-cols-6 gap-6 items-start"
-            ):
-                # Attack Column
+        with ui.element("div").classes(
+            "grid grid-cols-1 md:grid-cols-6 gap-2 items-start"
+        ):
+            # Attack Column
+            with ui.element("div").classes("flex flex-col"):
+                with expansion(f"To Hit {attack_total:+d}").style(
+                    "font-weight: bold; text-align: center"
+                ):
+                    for name, val in attack_mods.items():
+                        ui.label(f"• {name}: {val:+d}")
+            # Damage Column
+            with ui.element("div").classes("flex flex-col"):
+                with expansion(
+                    f"Damage {damage_total_str}/{crit_to_string(critical_bonus)}"
+                ).style("font-weight: bold; text-align: center"):
+                    for name, dice_list in damage_mods.items():
+                        ui.label(f"• {name}: {sum_up_dice(dice_list)}")
+            # AC Column
+            with ui.element("div").classes("flex flex-col"):
+                total_ac = get_total_ac(ac_bonuses)
+                touch_ac = get_touch_ac(ac_bonuses)
+                flat_footed_ac = get_flat_footed_ac(ac_bonuses)
+                with expansion(
+                    f"AC: {total_ac:d} (touch: {touch_ac:d}, flat-footed: {flat_footed_ac:d})"
+                ).style("font-weight: bold; text-align: center"):
+                    for ac_type, val in ac_bonuses.items():
+                        ui.label(
+                            f"• {ac_type.value if hasattr(ac_type, 'value') else str(ac_type)}: {val:+d}"
+                        )
+            # CMB Column
+            with ui.element("div").classes("flex flex-col"):
+                # ui.label(f"CMB {cmb_total:+d}").style("font-weight: bold; text-align: center")
+                with expansion(f"CMB {cmb_total:+d}").style(
+                    "font-weight: bold; text-align: center"
+                ):
+                    for name, val in cmb_breakdown.items():
+                        ui.label(f"• {name}: {val:+d}")
+            # CMD Column
+            with ui.element("div").classes("flex flex-col"):
+                with expansion(f"CMD {cmd_total:+d}").style(
+                    "font-weight: bold; text-align: center"
+                ):
+                    for name, val in cmd_breakdown.items():
+                        ui.label(f"• {name}: {val:+d}")
+            # Saves Column
+            for save, data in saves_breakdown.items():
                 with ui.element("div").classes("flex flex-col"):
-                    ui.label("Attack Bonus").style(
+                    save_total = sum(data.values())
+                    with expansion(f"{save.value} {save_total:+d}").style(
                         "font-weight: bold; text-align: center"
-                    )
-                    with ui.element("div"):
-                        ui.label(f"Total Attack Bonus: {attack_total:+d}")
-                    with expansion("Attack Breakdown"):
-                        for name, val in attack_mods.items():
+                    ):
+                        for name, val in data.items():
                             ui.label(f"• {name}: {val:+d}")
-                # Damage Column
-                with ui.element("div").classes("flex flex-col"):
-                    ui.label("Damage").style("font-weight: bold; text-align: center")
-                    with ui.element("div"):
-                        ui.label(f"Total Damage: {damage_total_str}")
-                        ui.label(f"Critical: {crit_to_string(critical_bonus)}")
-                    with expansion("Damage Breakdown"):
-                        for name, dice_list in damage_mods.items():
-                            ui.label(f"• {name}: {sum_up_dice(dice_list)}")
-                # AC Column
-                with ui.element("div").classes("flex flex-col"):
-                    ui.label("Armor Class (AC)").style(
-                        "font-weight: bold; text-align: center"
-                    )
-                    with ui.element("div"):
-                        total_ac = get_total_ac(ac_bonuses)
-                        touch_ac = get_touch_ac(ac_bonuses)
-                        flat_footed_ac = get_flat_footed_ac(ac_bonuses)
-                        ui.label(f"Total AC: {total_ac:d}")
-                        ui.label(f"Touch AC: {touch_ac:d}")
-                        ui.label(f"Flat-Footed AC: {flat_footed_ac:d}")
-                    with expansion("AC Breakdown"):
-                        for ac_type, val in ac_bonuses.items():
-                            ui.label(
-                                f"• {ac_type.value if hasattr(ac_type, 'value') else str(ac_type)}: {val:+d}"
-                            )
-                # CMB Column
-                with ui.element("div").classes("flex flex-col"):
-                    ui.label("CMB").style("font-weight: bold; text-align: center")
-                    with ui.element("div"):
-                        ui.label(f"Total CMB: {cmb_total:+d}")
-                    with expansion("CMB Breakdown"):
-                        for name, val in cmb_breakdown.items():
-                            ui.label(f"• {name}: {val:+d}")
-                # CMD Column
-                with ui.element("div").classes("flex flex-col"):
-                    ui.label("CMD").style("font-weight: bold; text-align: center")
-                    with ui.element("div"):
-                        ui.label(f"Total CMD: {cmd_total:+d}")
-                    with expansion("CMD Breakdown"):
-                        for name, val in cmd_breakdown.items():
-                            ui.label(f"• {name}: {val:+d}")
-                # Saves Column
-                with ui.element("div").classes("flex flex-col"):
-                    ui.label("Saves").style("font-weight: bold; text-align: center")
-                    with ui.element("div"):
-                        for save, data in saves_breakdown.items():
-                            save_total = sum(data.values())
-                            ui.label(f"{save.value}: {save_total:+d}")
-                    with expansion("Saves Breakdown"):
-                        for save, data in saves_breakdown.items():
-                            ui.label(f"{save.value}:")
-                            for name, val in data.items():
-                                ui.label(f"• {name}: {val:+d}")
 
 
 # Dialog and helpers for status effects
