@@ -99,9 +99,9 @@ def expansion(name: str, default: bool = False):
 
 
 def header_expansion(name: str, default: bool = False):
-    return expansion(
-        name, default=default
-    ).props('header-class="bg-primary text-white"')
+    return expansion(name, default=default).props(
+        'header-class="bg-secondary text-white"'
+    )
 
 
 # Updates when statuses modify stats
@@ -132,19 +132,6 @@ def render_weapons():
             w = character.off_hand
             dmg_str = sum_up_dice(w.damage_bonus(character))
             ui.label(f"Off Hand: {w.name} (Type: {w.type}, Damage: {dmg_str})")
-
-        def on_two_handed_change(e):
-            if not character.toggle_two_handed():
-                e.value = character.is_two_handed()
-                return
-            # only refresh the combat modifiers section
-            update_combat_sections()
-
-        ui.switch(
-            "Two Handed",
-            value=character.is_two_handed(),
-            on_change=on_two_handed_change,
-        )
 
 
 def render_items():
@@ -178,27 +165,28 @@ def render_abilities():
             else:
                 ui.label(ability.name)
 
+
 def render_feats():
     with header_expansion("Feats"):
         for feat in character.feats:
-            # Only PowerAttack currently has an EnabledCondition toggle
-            if hasattr(feat.condition, "toggle"):
+            ui.label(feat.name)
 
-                def make_handler(feat_):
-                    def handler(e):
-                        feat_.condition.toggle()
-                        # only refresh the combat modifiers section
-                        update_combat_sections()
 
-                    return handler
+def on_two_handed_change(e):
+    if not character.toggle_two_handed():
+        e.value = character.is_two_handed()
+        return
+    # only refresh the combat modifiers section
+    update_combat_sections()
 
-                ui.switch(
-                    feat.name,
-                    value=feat.condition.enabled,
-                    on_change=make_handler(feat),
-                )
-            else:
-                ui.label(feat.name)
+
+def make_handler(effect_):
+    def handler(e):
+        effect_.condition.toggle()
+        # only refresh the combat modifiers section
+        update_combat_sections()
+
+    return handler
 
 
 # Make attack/damage section refreshable so computed values update
@@ -221,6 +209,22 @@ def render_combat_modifiers():
         with ui.element("div").classes(
             "grid grid-cols-1 md:grid-cols-6 gap-2 items-start"
         ):
+            ui.switch(
+                "Two Handed",
+                value=character.is_two_handed(),
+                on_change=on_two_handed_change,
+            )
+
+            for effect in character.all_effects():
+                # Only PowerAttack currently has an EnabledCondition toggle
+                if hasattr(effect.condition, "toggle"):
+
+                    ui.switch(
+                        effect.name,
+                        value=effect.condition.enabled,
+                        on_change=make_handler(effect),
+                    )
+
             # Attack Column
             with ui.element("div").classes("flex flex-col"):
                 with expansion(f"To Hit {attack_string}").style(
@@ -433,7 +437,7 @@ with ui.header():
     ui.label(character.name).style("font-weight: bold; font-size: 1.5rem")
 
 with ui.row():
-    with ui.column().style('gap: 0.1rem'):
+    with ui.column().style("gap: 0.1rem"):
         render_statistics()
         render_weapons()
         render_items()

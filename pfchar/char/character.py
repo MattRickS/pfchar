@@ -41,7 +41,7 @@ class Character:
     statuses: list[Effect] = dataclasses.field(default_factory=list)
     _two_handed: bool = False
 
-    def _all_effects(self) -> list[Effect]:
+    def all_effects(self) -> list[Effect]:
         return self.abilities + self.feats + self.statuses + self.items
 
     def can_be_two_handed(self) -> bool:
@@ -66,7 +66,7 @@ class Character:
     def modified_statistic(self, stat: Statistic) -> int:
         original = self.statistics.get(stat, 10)
         modified = original + sum(
-            effect.statistic_bonus(self, stat) for effect in self._all_effects()
+            effect.statistic_bonus(self, stat) for effect in self.all_effects()
         )
         return modified
 
@@ -81,7 +81,7 @@ class Character:
         modifiers[stat.value] = stat_modifier(self.statistics[stat])
         modifiers |= {
             effect.name: effect.attack_bonus(self)
-            for effect in self._all_effects()
+            for effect in self.all_effects()
             if effect.condition(self)
         }
         return {name: value for name, value in modifiers.items() if value}
@@ -101,14 +101,14 @@ class Character:
 
         modifiers |= {
             effect.name: effect.damage_bonus(self)
-            for effect in self._all_effects()
+            for effect in self.all_effects()
             if effect.condition(self)
         }
         return {name: value for name, value in modifiers.items() if value}
 
     def critical_bonus(self) -> CriticalBonus:
         bonus = self.main_hand.critical_bonus(self, None)
-        for effect in self._all_effects():
+        for effect in self.all_effects():
             if effect.condition(self):
                 bonus = effect.critical_bonus(self, bonus)
 
@@ -124,7 +124,7 @@ class Character:
             ACType.ARMOR: 0,
         }
         max_dex_bonus = 99
-        for effect in self._all_effects():
+        for effect in self.all_effects():
             max_dex_bonus = min(max_dex_bonus, getattr(effect, "max_dex_bonus", 99))
             ac_bonuses = effect.armour_class_bonus(self)
 
@@ -215,7 +215,7 @@ class Character:
             for save, value in self.base_saves.items()
         }
 
-        for effect in self._all_effects():
+        for effect in self.all_effects():
             if effect.condition(self):
                 for save, value in effect.saves_bonuses(self).items():
                     saves[save][effect.name] = value
