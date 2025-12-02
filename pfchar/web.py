@@ -1,25 +1,17 @@
+"""
+There is much jank in here, mostly AI generated with minor hand tweaking.
+
+The state is pseudo-tab based, but things like closing the status dialog causes
+other tabs to close as well (possibly due to refreshable UI elements resetting
+the whole page?), or having the mouse over expansions while the same expansion
+is clicked in other devices still shows the click (but not the action).
+
+This may or may not work for multiple users.
+"""
+
 from nicegui import app, ui
 
-from pfchar.char.base import stat_modifier, CriticalBonus, Dice, Save, Statistic
-from pfchar.char.character import Character
-from pfchar.char.enchantments import FlamingBurst
-from pfchar.char.items import (
-    StatisticModifyingItem,
-    Weapon,
-    CelestialArmour,
-    ShieldOfTheSun,
-    AmuletOfNaturalArmor,
-    RingOfProtection,
-    CloakOfResistance,
-)
-from pfchar.char.feats import (
-    Dodge,
-    PowerAttack,
-    WeaponFocus,
-    WeaponTraining,
-    ImprovedCritical,
-)
-from pfchar.char.base import WeaponType
+from pfchar.char.base import stat_modifier, Save, Statistic
 from pfchar.utils import (
     crit_to_string,
     sum_up_dice,
@@ -31,109 +23,17 @@ from pfchar.utils import (
     to_attack_string,
 )
 from pfchar.char.base import Save
+from pfchar.premade import YOYU
 
-yoyu = Character(
-    name="Yoyu Tekko",
-    level=19,
-    statistics={
-        Statistic.STRENGTH: 19,
-        Statistic.DEXTERITY: 14,
-        Statistic.CONSTITUTION: 14,
-        Statistic.INTELLIGENCE: 12,
-        Statistic.WISDOM: 12,
-        Statistic.CHARISMA: 10,
-    },
-    base_attack_bonus=19,
-    base_saves={
-        Save.FORTITUDE: 11,
-        Save.REFLEX: 6,
-        Save.WILL: 6,
-    },
-    main_hand=Weapon(
-        name="Infernal Forge",
-        type=WeaponType.HAMMER,
-        critical=CriticalBonus(
-            crit_range=20,
-            crit_multiplier=3,
-        ),
-        base_damage=Dice(num=1, sides=8),
-        enchantment_modifier=3,
-        # TODO: Critical enhancement bonus from Deadly Critical affects the
-        #       burst damage, but weapon is calculated first _including_ effects.
-        enchantments=[FlamingBurst()],
-    ),
-    feats=[
-        PowerAttack(),
-        WeaponFocus(WeaponType.HAMMER),
-        WeaponTraining(WeaponType.HAMMER),
-        ImprovedCritical(WeaponType.HAMMER),
-        Dodge(),
-    ],
-    items=[
-        StatisticModifyingItem(
-            name="Belt of Physical Perfection (+6)",
-            stats={
-                Statistic.STRENGTH: 6,
-                Statistic.DEXTERITY: 6,
-                Statistic.CONSTITUTION: 6,
-            },
-        ),
-        CelestialArmour(),
-        ShieldOfTheSun(),
-        AmuletOfNaturalArmor(bonus=3),
-        RingOfProtection(bonus=2),
-        CloakOfResistance(bonus=5),
-    ],
-)
-
-someone_else = Character(
-    name="Someone Else",
-    level=19,
-    statistics={
-        Statistic.STRENGTH: 13,
-        Statistic.DEXTERITY: 18,
-        Statistic.CONSTITUTION: 14,
-        Statistic.INTELLIGENCE: 12,
-        Statistic.WISDOM: 14,
-        Statistic.CHARISMA: 14,
-    },
-    base_attack_bonus=13,
-    base_saves={
-        Save.FORTITUDE: 9,
-        Save.REFLEX: 6,
-        Save.WILL: 8,
-    },
-    main_hand=Weapon(
-        name="Some Dagger",
-        type=WeaponType.DAGGER,
-        critical=CriticalBonus(crit_range=19),
-        base_damage=Dice(num=1, sides=6),
-        enchantment_modifier=2,
-        enchantments=[],
-    ),
-    feats=[
-        Dodge(),
-    ],
-    items=[
-        StatisticModifyingItem(
-            name="Headband of Charisma (+6)",
-            stats={
-                Statistic.CHARISMA: 6,
-            },
-        ),
-        RingOfProtection(bonus=2),
-        CloakOfResistance(bonus=3),
-    ],
-)
-all_characters = (yoyu, someone_else)
-CHARACTERS_BY_NAME = {c.name: c for c in all_characters}
+ALL_CHARACTERS = (YOYU,)
+CHARACTERS_BY_NAME = {c.name: c for c in ALL_CHARACTERS}
 
 
 def get_character():
     """Return the current character based on app.storage.tab selection.
     Falls back to the first character if none is stored or invalid."""
     name = app.storage.tab.get("selected_character")
-    return CHARACTERS_BY_NAME.get(name) or all_characters[0]
+    return CHARACTERS_BY_NAME.get(name) or ALL_CHARACTERS[0]
 
 
 def expansion(name: str, default: bool = False):
@@ -373,7 +273,7 @@ def on_character_change(name: str):
     if name in CHARACTERS_BY_NAME:
         app.storage.tab["selected_character"] = name
     else:
-        app.storage.tab["selected_character"] = all_characters[0].name
+        app.storage.tab["selected_character"] = ALL_CHARACTERS[0].name
     render_page.refresh()
 
 
@@ -498,7 +398,7 @@ async def page():
     await ui.context.client.connected()
     selected_name = app.storage.tab.get("selected_character")
     if selected_name not in CHARACTERS_BY_NAME:
-        selected_name = all_characters[0].name
+        selected_name = ALL_CHARACTERS[0].name
 
     def handle_tab_change(e):
         if e.value:
@@ -506,7 +406,7 @@ async def page():
 
     with ui.header():
         with ui.tabs(value=selected_name, on_change=handle_tab_change):
-            for c in all_characters:
+            for c in ALL_CHARACTERS:
                 ui.tab(c.name)
     render_page()
 
