@@ -126,16 +126,17 @@ someone_else = Character(
     ],
 )
 all_characters = (yoyu, someone_else)
-character = yoyu
-
-EXPANSION = {}
+CHARACTER = None
+CHARACTERS_BY_NAME = {c.name: c for c in all_characters}
+STATUS_DIALOG = None
 
 
 def expansion(name: str, default: bool = False):
+    key = f"expansion.{name}"
     return ui.expansion(
         name,
-        value=EXPANSION.get(name, default),
-        on_value_change=lambda e: EXPANSION.update({name: e.value}),
+        value=app.storage.tab.get(key, default),
+        on_value_change=lambda e: app.storage.tab.update({key: e.value}),
     ).classes("w-full")
 
 
@@ -150,9 +151,9 @@ def header_expansion(name: str, default: bool = False):
 def render_statistics():
     with header_expansion("Statistics"):
         for stat in Statistic:
-            value = character.statistics.get(stat, 10)
+            value = CHARACTER.statistics.get(stat, 10)
             modifier = stat_modifier(value)
-            modified_value = character.modified_statistic(stat)
+            modified_value = CHARACTER.modified_statistic(stat)
             modified_modifier = stat_modifier(modified_value)
             if modified_value != value:
                 ui.label(
@@ -164,21 +165,21 @@ def render_statistics():
 
 def render_weapons():
     with header_expansion("Weapons"):
-        ui.label(f"Base Attack Bonus: {character.base_attack_bonus:+d}")
-        if character.main_hand:
-            w = character.main_hand
-            dmg_str = sum_up_dice(w.damage_bonus(character))
+        ui.label(f"Base Attack Bonus: {CHARACTER.base_attack_bonus:+d}")
+        if CHARACTER.main_hand:
+            w = CHARACTER.main_hand
+            dmg_str = sum_up_dice(w.damage_bonus(CHARACTER))
             ui.label(f"Main Hand: {w.name} (Type: {w.type}, Damage: {dmg_str})")
-        if character.off_hand:
-            w = character.off_hand
-            dmg_str = sum_up_dice(w.damage_bonus(character))
+        if CHARACTER.off_hand:
+            w = CHARACTER.off_hand
+            dmg_str = sum_up_dice(w.damage_bonus(CHARACTER))
             ui.label(f"Off Hand: {w.name} (Type: {w.type}, Damage: {dmg_str})")
 
 
 def render_items():
     with header_expansion("Items"):
-        if character.items:
-            for item in character.items:
+        if CHARACTER.items:
+            for item in CHARACTER.items:
                 ui.label(item.name)
         else:
             ui.label("No items equipped")
@@ -186,7 +187,7 @@ def render_items():
 
 def render_abilities():
     with header_expansion("Abilities"):
-        for ability in character.abilities:
+        for ability in CHARACTER.abilities:
             # Only PowerAttack currently has an EnabledCondition toggle
             if hasattr(ability.condition, "toggle"):
 
@@ -209,13 +210,13 @@ def render_abilities():
 
 def render_feats():
     with header_expansion("Feats"):
-        for feat in character.feats:
+        for feat in CHARACTER.feats:
             ui.label(feat.name)
 
 
 def on_two_handed_change(e):
-    if not character.toggle_two_handed():
-        e.value = character.is_two_handed()
+    if not CHARACTER.toggle_two_handed():
+        e.value = CHARACTER.is_two_handed()
         return
     # only refresh the combat modifiers section
     update_combat_sections()
@@ -233,13 +234,13 @@ def make_handler(effect_):
 # Make attack/damage section refreshable so computed values update
 @ui.refreshable
 def render_combat_modifiers():
-    attack_mods = character.attack_bonus()
-    damage_mods = character.damage_bonus()
-    critical_bonus = character.critical_bonus()
-    ac_bonuses = character.armour_bonuses()
-    cmb_breakdown = character.get_cmb()
-    cmd_breakdown = character.get_cmd()
-    saves_breakdown = character.get_saves()
+    attack_mods = CHARACTER.attack_bonus()
+    damage_mods = CHARACTER.damage_bonus()
+    critical_bonus = CHARACTER.critical_bonus()
+    ac_bonuses = CHARACTER.armour_bonuses()
+    cmb_breakdown = CHARACTER.get_cmb()
+    cmd_breakdown = CHARACTER.get_cmd()
+    saves_breakdown = CHARACTER.get_saves()
 
     attack_string = to_attack_string(attack_mods)
     damage_total_str = sum_up_modifiers(damage_mods)
@@ -252,11 +253,11 @@ def render_combat_modifiers():
         ):
             ui.switch(
                 "Two Handed",
-                value=character.is_two_handed(),
+                value=CHARACTER.is_two_handed(),
                 on_change=on_two_handed_change,
             )
 
-            for effect in character.all_effects():
+            for effect in CHARACTER.all_effects():
                 # Only PowerAttack currently has an EnabledCondition toggle
                 if hasattr(effect.condition, "toggle"):
 
@@ -318,9 +319,6 @@ def render_combat_modifiers():
                             ui.label(f"• {name}: {val:+d}")
 
 
-STATUS_DIALOG = None
-
-
 def open_add_status_dialog():
     global STATUS_DIALOG
     if STATUS_DIALOG is None:
@@ -329,8 +327,8 @@ def open_add_status_dialog():
 
 
 def delete_status(index: int):
-    if 0 <= index < len(character.statuses):
-        del character.statuses[index]
+    if 0 <= index < len(CHARACTER.statuses):
+        del CHARACTER.statuses[index]
         render_statuses.refresh()
         update_combat_sections()
 
@@ -338,8 +336,8 @@ def delete_status(index: int):
 @ui.refreshable
 def render_statuses():
     with header_expansion("Statuses"):
-        if character.statuses:
-            for i, status in enumerate(character.statuses):
+        if CHARACTER.statuses:
+            for i, status in enumerate(CHARACTER.statuses):
                 with ui.row().classes("items-center"):
                     ui.label(status.name)
                     ui.button(
@@ -375,14 +373,14 @@ def render_page():
 
 
 def on_character_change(name: str):
-    global character
+    global CHARACTER
     # swap current character by name
     for c in all_characters:
         if c.name == name:
-            character = c
+            CHARACTER = c
             break
     else:
-        character = all_characters[0]
+        CHARACTER = all_characters[0]
     # store per tab (requires client connection)
     try:
         app.storage.tab["selected_character"] = name
@@ -473,7 +471,7 @@ def create_status_dialog():
                             v = 0
                         if v:
                             saves_dict[save] = v
-                    character.statuses.append(
+                    CHARACTER.statuses.append(
                         create_status_effect(
                             name,
                             attack_bonus=attack,
@@ -520,12 +518,14 @@ def create_status_dialog():
 
 @ui.page("/")
 async def page():
+    global CHARACTER
     await ui.context.client.connected()
 
     # Restore selection from tab storage
     selected_name = app.storage.tab.get("selected_character")
-    if selected_name not in {c.name for c in all_characters}:
-        selected_name = all_characters[0].name
+    if not (CHARACTER := CHARACTERS_BY_NAME.get(selected_name)):
+        CHARACTER = all_characters[0]
+        selected_name = CHARACTER.name
 
     # Handle tab changes
     def handle_tab_change(e):
