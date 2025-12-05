@@ -235,6 +235,5 @@ CHELLYBEAN = Character(
             # Every attack target must pass DC 17 Will or attack has Feint
             #   - Feint not applicable to creatures that can see through Illusions
         ),
-        AmuletOfNaturalArmor(bonus=2),  # Made
     ],
 )
