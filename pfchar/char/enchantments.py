@@ -31,3 +31,17 @@ class FlamingBurst(WeaponEnchantment):
                 + [Dice(num=critical_bonus.crit_multiplier - 1, sides=10)]
             ),
         )
+
+class Merciful(WeaponEnchantment):
+    def __init__(self):
+        super().__init__(
+            name="Merciful",
+            damage_dice=[Dice(num=1, sides=6)]
+        )
+
+class Sneaky(WeaponEnchantment):
+    def __init__(self):
+        super().__init__(
+            name="Sneaky",
+            damage_dice=[Dice(num=7, sides=6)]
+        )

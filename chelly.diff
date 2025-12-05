@@ -1,0 +1,156 @@
+diff --git a/pfchar/char/enchantments.py b/pfchar/char/enchantments.py
+index 14355b9..613a62f 100644
+--- a/pfchar/char/enchantments.py
++++ b/pfchar/char/enchantments.py
+@@ -31,3 +31,17 @@ class FlamingBurst(WeaponEnchantment):
+                 + [Dice(num=critical_bonus.crit_multiplier - 1, sides=10)]
+             ),
+         )
++
++class Merciful(WeaponEnchantment):
++    def __init__(self):
++        super().__init__(
++            name="Merciful",
++            damage_dice=[Dice(num=1, sides=6)]
++        )
++
++class Sneaky(WeaponEnchantment):
++    def __init__(self):
++        super().__init__(
++            name="Sneaky",
++            damage_dice=[Dice(num=7, sides=6)]
++        )
+diff --git a/pfchar/premade.py b/pfchar/premade.py
+index 1a6e17e..1f28f1a 100644
+--- a/pfchar/premade.py
++++ b/pfchar/premade.py
+@@ -1,6 +1,6 @@
+ from pfchar.char.base import CriticalBonus, Dice, Save, Statistic
+ from pfchar.char.character import Character
+-from pfchar.char.enchantments import FlamingBurst
++from pfchar.char.enchantments import FlamingBurst, Merciful, Sneaky
+ from pfchar.char.items import (
+     StatisticModifyingItem,
+     Weapon,
+@@ -10,6 +10,7 @@ from pfchar.char.items import (
+     RingOfProtection,
+     CloakOfResistance,
+     Armour,
++    Item,
+ )
+ from pfchar.char.feats import (
+     Dodge,
+@@ -135,3 +136,97 @@ DORAMAK = Character(
+         AmuletOfNaturalArmor(bonus=2),  # Made
+     ],
+ )
++
++
++CHELLYBEAN = Character(
++    name= "Chellybean Smith",
++    level=19,
++    statistics={
++        Statistic.STRENGTH: 10,
++        Statistic.DEXTERITY: 18,
++        Statistic.CONSTITUTION: 14,
++        Statistic.INTELLIGENCE: 14,
++        Statistic.WISDOM: 12,
++        Statistic.CHARISMA: 14,
++    },
++    base_attack_bonus=13,
++    base_saves={
++        Save.FORTITUDE: 8,
++        Save.REFLEX: 17,
++        Save.WILL: 7,
++    },
++    main_hand=Weapon(
++        name="+2 Sneaky Merciful Dagger",
++        type=WeaponType.DAGGER,
++        enchantment_modifier=2,
++        critical=CriticalBonus(crit_range=19),
++        base_damage=Dice(num=1, sides=3),
++        enchantments=[
++            Merciful(),
++            Sneaky(),
++        ]
++    ),
++    feats=[Dodge()],
++    items=[
++        Armour(
++            name="Sexy Catskin Armour",
++            armour_bonus=3,
++            armor_check_penalty=0,
++        ),
++        Armour(
++            name="Masterwork Buckler",
++            shield_bonus=1,
++            armor_check_penalty=0,
++        ),
++        RingOfProtection(bonus=1),
++        StatisticModifyingItem(
++            name="Headband of Charisma (+6)",
++            stats={
++                Statistic.CHARISMA: 6,
++            },
++        ),
++        StatisticModifyingItem(
++            name="Belt of Dexterity (+6)",
++            stats={
++                Statistic.DEXTERITY: 6,
++            },
++        ),
++        Weapon(
++            name="Rat Ring",
++            type=WeaponType.UNARMED,  # ?
++            enchantment_modifier=1,
++            base_damage=Dice(num=1, sides=3),
++            # Part of a full round action
++        ),
++        Armour(name="Shirt of Movement"),
++
++        Armour(
++            name="Gloomstrider",
++            # Unlimited Shadow Jump
++        ),
++        Item(
++            name="Eyeglasses of Doom",
++            # Cast doom as a gaze attack.
++            # Cast Fear 1/week
++            # Continuous Deathwatch
++        ),
++        Armour(
++            name="Gloves of Vembraces Storm",
++            # Shadow Blast 1d6/level. half cold, half electric
++            # If fail reflex save blinded 1d6/rounds
++            # Recharge after 1d6/rounds
++        ),
++        Item(
++            name="Cloak of Shadows",
++            # Concealment: 20% miss chance
++            # Stealth check +5
++            # DR 5/Good
++            # Protects from Sunlight
++            # Dimlight more darker (bonus negated by darkvision):
++            #   - Concealment: 50% miss chance
++            #   - Stealth check +10
++            # Every attack target must pass DC 17 Will or attack has Feint
++            #   - Feint not applicable to creatures that can see through Illusions
++        ),
++    ],
++)
+diff --git a/pfchar/web.py b/pfchar/web.py
+index 6395772..4ce9cf7 100644
+--- a/pfchar/web.py
++++ b/pfchar/web.py
+@@ -23,9 +23,9 @@ from pfchar.utils import (
+     to_attack_string,
+ )
+ from pfchar.char.base import Save
+-from pfchar.premade import YOYU, DORAMAK
++from pfchar.premade import YOYU, DORAMAK, CHELLYBEAN
+ 
+-ALL_CHARACTERS = (YOYU, DORAMAK)
++ALL_CHARACTERS = (YOYU, DORAMAK, CHELLYBEAN)
+ CHARACTERS_BY_NAME = {c.name: c for c in ALL_CHARACTERS}
+ 
+ 

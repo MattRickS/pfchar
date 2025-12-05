@@ -23,9 +23,9 @@ from pfchar.utils import (
     to_attack_string,
 )
 from pfchar.char.base import Save
-from pfchar.premade import YOYU, DORAMAK
+from pfchar.premade import YOYU, DORAMAK, CHELLYBEAN
 
-ALL_CHARACTERS = (YOYU, DORAMAK)
+ALL_CHARACTERS = (YOYU, DORAMAK, CHELLYBEAN)
 CHARACTERS_BY_NAME = {c.name: c for c in ALL_CHARACTERS}
 
 
