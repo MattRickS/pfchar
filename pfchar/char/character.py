@@ -152,6 +152,16 @@ class Character:
 
         return {ac_type: value for ac_type, value in bonuses.items() if value}
 
+    def is_dex_capped(self) -> bool:
+        # For some reason the dex cap only applies to AC otherwise would just modify
+        # modified_statistic() for DEX.
+        max_dex_bonus = 99
+        for effect in self.all_effects():
+            max_dex_bonus = min(max_dex_bonus, getattr(effect, "max_dex_bonus", 99))
+        return (
+            stat_modifier(self.modified_statistic(Statistic.DEXTERITY)) > max_dex_bonus
+        )
+
     def get_cmb(self) -> dict[str, int]:
         statistic = (
             Statistic.DEXTERITY

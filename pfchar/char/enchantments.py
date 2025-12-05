@@ -32,16 +32,12 @@ class FlamingBurst(WeaponEnchantment):
             ),
         )
 
+
 class Merciful(WeaponEnchantment):
     def __init__(self):
-        super().__init__(
-            name="Merciful",
-            damage_dice=[Dice(num=1, sides=6)]
-        )
+        super().__init__(name="Merciful", damage_dice=[Dice(num=1, sides=6)])
+
 
 class Sneaky(WeaponEnchantment):
     def __init__(self):
-        super().__init__(
-            name="Sneaky",
-            damage_dice=[Dice(num=7, sides=6)]
-        )
+        super().__init__(name="Sneaky", damage_dice=[Dice(num=7, sides=6)])

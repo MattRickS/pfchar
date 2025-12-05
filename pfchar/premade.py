@@ -1,4 +1,4 @@
-from pfchar.char.base import CriticalBonus, Dice, Save, Statistic
+from pfchar.char.base import CriticalBonus, Dice, Save, Size, Statistic
 from pfchar.char.character import Character
 from pfchar.char.enchantments import FlamingBurst, Merciful, Sneaky
 from pfchar.char.items import (
@@ -139,8 +139,9 @@ DORAMAK = Character(
 
 
 CHELLYBEAN = Character(
-    name= "Chellybean Smith",
+    name="Chellybean Smith",
     level=19,
+    size=Size.SMALL,
     statistics={
         Statistic.STRENGTH: 10,
         Statistic.DEXTERITY: 18,
@@ -164,21 +165,25 @@ CHELLYBEAN = Character(
         enchantments=[
             Merciful(),
             Sneaky(),
-        ]
+        ],
     ),
     feats=[Dodge()],
     items=[
         Armour(
             name="Sexy Catskin Armour",
-            armour_bonus=3,
+            armour_bonus=2,
+            enhancement_bonus=2,  # Upgraded
             armor_check_penalty=0,
+            max_dex_bonus=6,  # Was missing, this sucks
+            # enchantments=[Shadow()],
         ),
         Armour(
             name="Masterwork Buckler",
             shield_bonus=1,
             armor_check_penalty=0,
+            enhancement_bonus=2,  # Upgraded
         ),
-        RingOfProtection(bonus=1),
+        RingOfProtection(bonus=2),
         StatisticModifyingItem(
             name="Headband of Charisma (+6)",
             stats={
@@ -198,8 +203,7 @@ CHELLYBEAN = Character(
             base_damage=Dice(num=1, sides=3),
             # Part of a full round action
         ),
-        Armour(name="Shirt of Movement"),
-
+        Item(name="Shirt of Movement"),
         Armour(
             name="Gloomstrider",
             # Unlimited Shadow Jump
@@ -210,7 +214,7 @@ CHELLYBEAN = Character(
             # Cast Fear 1/week
             # Continuous Deathwatch
         ),
-        Armour(
+        Item(
             name="Gloves of Vembraces Storm",
             # Shadow Blast 1d6/level. half cold, half electric
             # If fail reflex save blinded 1d6/rounds
@@ -228,5 +232,6 @@ CHELLYBEAN = Character(
             # Every attack target must pass DC 17 Will or attack has Feint
             #   - Feint not applicable to creatures that can see through Illusions
         ),
+        AmuletOfNaturalArmor(bonus=2),  # Made
     ],
 )

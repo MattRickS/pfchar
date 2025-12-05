@@ -11,7 +11,7 @@ This may or may not work for multiple users.
 
 from nicegui import app, ui
 
-from pfchar.char.base import stat_modifier, Save, Statistic
+from pfchar.char.base import stat_modifier, ACType, Save, Statistic
 from pfchar.utils import (
     crit_to_string,
     sum_up_dice,
@@ -190,9 +190,11 @@ def render_combat_modifiers():
                     f"AC: {total_ac:d} (touch: {touch_ac:d}, flat-footed: {flat_footed_ac:d})"
                 ).style("font-weight: bold; text-align: center"):
                     for ac_type, val in ac_bonuses.items():
-                        ui.label(
-                            f"• {ac_type.value if hasattr(ac_type, 'value') else str(ac_type)}: {val:+d}"
-                        )
+                        if ac_type == ACType.DEXTERITY and character.is_dex_capped():
+                            val = f"{val:+d} (capped)"
+                        else:
+                            val = f"{val:+d}"
+                        ui.label(f"• {ac_type.value}: {val}")
             with ui.element("div").classes("flex flex-col"):
                 with expansion(f"CMB {cmb_total:+d}").style(
                     "font-weight: bold; text-align: center"
