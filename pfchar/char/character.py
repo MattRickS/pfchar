@@ -11,7 +11,7 @@ from pfchar.char.base import (
     Size,
     Statistic,
 )
-from pfchar.char.feats import Feat
+from pfchar.char.feats import Feat, WeaponFinesse
 from pfchar.char.items import Item, Weapon
 from pfchar.char.abilities import Ability
 
@@ -60,8 +60,18 @@ class Character:
         self._two_handed = not self._two_handed
         return True
 
+    def has_feat(self, feat_type: type[Feat]) -> bool:
+        return any(isinstance(feat, feat_type) for feat in self.feats)
+
     def attack_statistic(self) -> Statistic:
-        return Statistic.DEXTERITY if self.main_hand.is_ranged else Statistic.STRENGTH
+        return (
+            Statistic.DEXTERITY
+            if (
+                self.main_hand.is_ranged
+                or (self.has_feat(WeaponFinesse) and self.main_hand.is_light)
+            )
+            else Statistic.STRENGTH
+        )
 
     def modified_statistic(self, stat: Statistic) -> int:
         original = self.statistics.get(stat, 10)

@@ -15,6 +15,7 @@ from pfchar.char.items import (
 from pfchar.char.feats import (
     Dodge,
     PowerAttack,
+    WeaponFinesse,
     WeaponFocus,
     WeaponTraining,
     ImprovedCritical,
@@ -162,15 +163,16 @@ CHELLYBEAN = Character(
         enchantment_modifier=2,
         critical=CriticalBonus(crit_range=19),
         base_damage=Dice(num=1, sides=3),
+        is_light=True,
         enchantments=[
             Merciful(),
             Sneaky(),
         ],
     ),
-    feats=[Dodge()],
+    feats=[Dodge(), WeaponFinesse()],
     items=[
         Armour(
-            name="Sexy Catskin Armour",
+            name="+2 Sexy Catskin Armour",
             armour_bonus=2,
             enhancement_bonus=2,  # Upgraded
             armor_check_penalty=0,
@@ -178,7 +180,7 @@ CHELLYBEAN = Character(
             # enchantments=[Shadow()],
         ),
         Armour(
-            name="Masterwork Buckler",
+            name="+2 Masterwork Buckler",
             shield_bonus=1,
             armor_check_penalty=0,
             enhancement_bonus=2,  # Upgraded
@@ -197,14 +199,15 @@ CHELLYBEAN = Character(
             },
         ),
         Weapon(
-            name="Rat Ring",
+            name="+1 Rat Ring",
             type=WeaponType.UNARMED,  # ?
             enchantment_modifier=1,
             base_damage=Dice(num=1, sides=3),
+            is_light=True,
             # Part of a full round action
         ),
         Item(name="Shirt of Movement"),
-        Armour(
+        Item(
             name="Gloomstrider",
             # Unlimited Shadow Jump
         ),

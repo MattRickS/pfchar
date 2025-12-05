@@ -72,3 +72,9 @@ class ImprovedCritical(Feat):
             crit_multiplier=critical_bonus.crit_multiplier,
             damage_bonus=critical_bonus.damage_bonus,
         )
+
+
+@dataclasses.dataclass
+class WeaponFinesse(Feat):
+    def __init__(self):
+        super().__init__(name="Weapon Finesse")

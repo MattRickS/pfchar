@@ -36,6 +36,7 @@ class Weapon(Item):
     base_damage: Dice
     critical: CriticalBonus = dataclasses.field(default_factory=CriticalBonus)
     is_ranged: bool = False
+    is_light: bool = False
     enchantment_modifier: int = 0
     enchantments: list[WeaponEnchantment] = dataclasses.field(default_factory=list)
 
