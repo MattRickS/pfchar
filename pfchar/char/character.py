@@ -128,25 +128,10 @@ class Character:
         bonuses = {ac_type: 0 for ac_type in ArmorBonus}
         bonuses[ArmorBonus.SIZE] = -self.size.value
 
-        # Enhancements for armour and shield stack, but only the highest bonus applies to each.
-        enhancements = {
-            ArmorBonus.SHIELD: 0,
-            ArmorBonus.ARMOR: 0,
-        }
         max_dex_bonus = 99
         for effect in self.all_effects():
             max_dex_bonus = min(max_dex_bonus, getattr(effect, "max_dex_bonus", 99))
             ac_bonuses = effect.armour_class_bonus(self)
-
-            # An enhancement bonus must come from either the armor or shield,
-            # and will eventually stack, though only the highest bonus applies to each.
-            if enhancement_bonus := ac_bonuses.pop(ArmorBonus.ENHANCEMENT, 0):
-                overlap = set(enhancements).intersection(ac_bonuses)
-                assert overlap, "Enhancement bonus must apply to armor or shield"
-                for ac_type in overlap:
-                    enhancements[ac_type] = max(
-                        enhancements[ac_type], enhancement_bonus
-                    )
 
             # All penalties are added, not just the highest.
             if enhancement_bonus := ac_bonuses.pop(ArmorBonus.PENALTY, 0):
@@ -158,7 +143,6 @@ class Character:
         bonuses[ArmorBonus.DEXTERITY] = min(
             stat_modifier(self.modified_statistic(Statistic.DEXTERITY)), max_dex_bonus
         )
-        bonuses[ArmorBonus.ENHANCEMENT] = sum(enhancements.values())
 
         return {ac_type: value for ac_type, value in bonuses.items() if value}
 

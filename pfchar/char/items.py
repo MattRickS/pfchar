@@ -82,10 +82,12 @@ class Armour(Item):
         bonuses = {}
         if self.shield_bonus:
             bonuses[ArmorBonus.SHIELD] = self.shield_bonus
+            if self.enhancement_bonus:
+                bonuses[ArmorBonus.SHIELD_ENHANCEMENT] = self.enhancement_bonus
         if self.armour_bonus:
             bonuses[ArmorBonus.ARMOR] = self.armour_bonus
-        if self.enhancement_bonus:
-            bonuses[ArmorBonus.ENHANCEMENT] = self.enhancement_bonus
+            if self.enhancement_bonus:
+                bonuses[ArmorBonus.ARMOR_ENHANCEMENT] = self.enhancement_bonus
         return bonuses
 
 

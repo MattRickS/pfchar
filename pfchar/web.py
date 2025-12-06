@@ -182,7 +182,7 @@ def render_combat_modifiers():
                     )
 
         with ui.element("div").classes(
-            "grid grid-cols-1 md:grid-cols-6 gap-2 items-start"
+            "grid grid-cols-1 md:grid-cols-5 gap-2 items-start"
         ):
             render_combat_mod(
                 f"To Hit {attack_string}",

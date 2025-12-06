@@ -38,9 +38,10 @@ class Save(enum.StrEnum):
 
 class ArmorBonus(enum.StrEnum):
     ARMOR = "Armor"
+    ARMOR_ENHANCEMENT = "Armor Enhancement"
     SHIELD = "Shield"
+    SHIELD_ENHANCEMENT = "Shield Enhancement"
     DEXTERITY = "Dexterity"
-    ENHANCEMENT = "Enhancement"
     DEFLECTION = "Deflection"
     NATURAL = "Natural"
     DODGE = "Dodge"
