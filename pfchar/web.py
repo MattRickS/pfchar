@@ -139,6 +139,18 @@ def make_handler(effect_):
     return handler
 
 
+def render_list(values):
+    with ui.list().props("dense").style("font-weight: normal; text-align: left"):
+        for val in values:
+            ui.item(val)
+
+
+def render_combat_mod(text: str, values: list[str]):
+    with ui.element("div").classes("flex flex-col"):
+        with expansion(text).style("font-weight: bold; text-align: center"):
+            render_list(values)
+
+
 # Make attack/damage section refreshable so computed values update
 @ui.refreshable
 def render_combat_modifiers():
@@ -170,54 +182,49 @@ def render_combat_modifiers():
                         value=effect.condition.enabled,
                         on_change=make_handler(effect),
                     )
-            with ui.element("div").classes("flex flex-col"):
-                with expansion(f"To Hit {attack_string}").style(
-                    "font-weight: bold; text-align: center"
-                ):
-                    for name, val in attack_mods.items():
-                        ui.label(f"• {name}: {val:+d}")
-            with ui.element("div").classes("flex flex-col"):
-                with expansion(
-                    f"Damage {damage_total_str}/{crit_to_string(critical_bonus)}"
-                ).style("font-weight: bold; text-align: center"):
-                    for name, dice_list in damage_mods.items():
-                        ui.label(f"• {name}: {sum_up_dice(dice_list)}")
-            with ui.element("div").classes("flex flex-col"):
-                total_ac = get_total_ac(ac_bonuses)
-                touch_ac = get_touch_ac(ac_bonuses)
-                flat_footed_ac = get_flat_footed_ac(ac_bonuses)
-                with expansion(
-                    f"AC: {total_ac:d} (touch: {touch_ac:d}, flat-footed: {flat_footed_ac:d})"
-                ).style("font-weight: bold; text-align: center"):
-                    for ac_type, val in ac_bonuses.items():
-                        if (
-                            ac_type == ArmorBonus.DEXTERITY
-                            and character.is_dex_capped()
-                        ):
-                            val = f"{val:+d} (capped)"
-                        else:
-                            val = f"{val:+d}"
-                        ui.label(f"• {ac_type.value}: {val}")
-            with ui.element("div").classes("flex flex-col"):
-                with expansion(f"CMB {cmb_total:+d}").style(
-                    "font-weight: bold; text-align: center"
-                ):
-                    for name, val in cmb_breakdown.items():
-                        ui.label(f"• {name}: {val:+d}")
-            with ui.element("div").classes("flex flex-col"):
-                with expansion(f"CMD {cmd_total:+d}").style(
-                    "font-weight: bold; text-align: center"
-                ):
-                    for name, val in cmd_breakdown.items():
-                        ui.label(f"• {name}: {val:+d}")
+            render_combat_mod(
+                f"To Hit {attack_string}",
+                (f"{name}: {val:+d}" for name, val in attack_mods.items()),
+            )
+            render_combat_mod(
+                f"Damage {damage_total_str}/{crit_to_string(critical_bonus)}",
+                (
+                    f"{name}: {sum_up_dice(dice_list)}"
+                    for name, dice_list in damage_mods.items()
+                ),
+            )
+            total_ac = get_total_ac(ac_bonuses)
+            touch_ac = get_touch_ac(ac_bonuses)
+            flat_footed_ac = get_flat_footed_ac(ac_bonuses)
+            render_combat_mod(
+                f"AC: {total_ac:d} (touch: {touch_ac:d}, flat-footed: {flat_footed_ac:d})",
+                (
+                    (
+                        (
+                            f"{ac_type.value}: {val:+d} (capped)"
+                            if (
+                                ac_type == ArmorBonus.DEXTERITY
+                                and character.is_dex_capped()
+                            )
+                            else f"{ac_type.value}: {val:+d}"
+                        )
+                        for ac_type, val in ac_bonuses.items()
+                    )
+                ),
+            )
+            render_combat_mod(
+                f"CMB {cmb_total:+d}",
+                (f"{name}: {val:+d}" for name, val in cmb_breakdown.items()),
+            )
+            render_combat_mod(
+                f"CMD {cmd_total:+d}",
+                (f"{name}: {val:+d}" for name, val in cmd_breakdown.items()),
+            )
             for save, data in saves_breakdown.items():
-                with ui.element("div").classes("flex flex-col"):
-                    save_total = sum(data.values())
-                    with expansion(f"{save.value} {save_total:+d}").style(
-                        "font-weight: bold; text-align: center"
-                    ):
-                        for name, val in data.items():
-                            ui.label(f"• {name}: {val:+d}")
+                render_combat_mod(
+                    f"{save.value} {sum(data.values()):+d}",
+                    (f"{name}: {val:+d}" for name, val in data.items()),
+                )
 
 
 def open_add_status_dialog():
