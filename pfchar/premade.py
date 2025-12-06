@@ -1,4 +1,11 @@
-from pfchar.char.base import CriticalBonus, Dice, Save, Size, Statistic
+from pfchar.char.base import (
+    CriticalBonus,
+    Dice,
+    Save,
+    Size,
+    Statistic,
+    WeaponType,
+)
 from pfchar.char.character import Character
 from pfchar.char.enchantments import FlamingBurst, Merciful, Sneaky
 from pfchar.char.items import (
@@ -20,8 +27,6 @@ from pfchar.char.feats import (
     WeaponTraining,
     ImprovedCritical,
 )
-from pfchar.char.base import WeaponType
-from pfchar.char.base import Save
 
 YOYU = Character(
     name="Yoyu Tekko",
@@ -75,6 +80,8 @@ YOYU = Character(
         RingOfProtection(bonus=2),
         CloakOfResistance(bonus=5),
     ],
+    # TODO: The status effect should be added to the Armour item itself
+    # statuses=[create_status_effect("Vestment of the Champion", ac_bonuses={ACType.ENHANCEMENT: 5})],
 )
 
 DORAMAK = Character(
@@ -172,12 +179,12 @@ CHELLYBEAN = Character(
     feats=[Dodge(), WeaponFinesse()],
     items=[
         Armour(
-            name="+2 Sexy Catskin Armour",
-            armour_bonus=2,
-            enhancement_bonus=2,  # Upgraded
-            armor_check_penalty=0,
-            max_dex_bonus=6,  # Was missing, this sucks
-            # enchantments=[Shadow()],
+            name="+3 Mithral Breastplate",
+            armour_bonus=6,
+            enhancement_bonus=3,
+            armor_check_penalty=4 - 3,  # Mithral reduction
+            max_dex_bonus=3 + 2,  # Mithral increases
+            spell_failure_chance=25 - 10,  # Mithral reduction
         ),
         Armour(
             name="+2 Masterwork Buckler",
