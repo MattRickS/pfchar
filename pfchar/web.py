@@ -279,119 +279,163 @@ def on_character_change(name: str):
     render_page.refresh()
 
 
+def _create_enum_entry_section(enum_class: type, on_change=None):
+    with ui.expansion(f"{enum_class.__name__} Modifiers").classes("font-semibold mt-2"):
+        entries: dict = {}
+        with ui.row():
+            enum_select = ui.select(
+                {s: s.value for s in enum_class}, label="Statistic"
+            ).props("outlined dense")
+            enum_value = ui.number(label="Value", value=0).props("outlined dense")
+
+        def add_entry():
+            if enum_select.value is None:
+                return
+
+            try:
+                v = int(enum_value.value or 0)
+            except Exception:
+                v = 0
+
+            if v == 0:
+                return
+
+            entries[enum_select.value] = v
+            enum_select.set_value(None)
+            enum_value.set_value(0)
+            refresh_entries()
+            if on_change:
+                on_change()
+
+        ui.button(f"Add {enum_class.__name__}", on_click=add_entry).props("dense")
+        ui_entries = ui.column().classes("gap-1")
+
+        def refresh_entries():
+            ui_entries.clear()
+            for s, v in entries.items():
+                with ui_entries:
+                    with ui.row().classes("items-center justify-between"):
+                        ui.label(f"{s.value}: {v:+d}")
+                        ui.button(
+                            icon="delete",
+                            on_click=lambda _, key=s: (
+                                entries.pop(key),
+                                refresh_entries(),
+                            ),
+                        ).props("flat color=red dense")
+
+        enum_select.on("keydown.enter", add_entry)
+        enum_value.on("keydown.enter", add_entry)
+
+    return entries
+
+
 def create_status_dialog():
     status_dialog = ui.dialog()
+    expanded = getattr(app.storage.tab, "statuses_expanded", True)
+
     with status_dialog:
-        with ui.card():
-            ui.label("Add Status").style("font-weight: bold; font-size: 1.2rem")
-            status_name_input = ui.input("Name").props("clearable")
-            status_attack_input = ui.number("Attack Bonus", value=0)
-            status_damage_input = ui.number("Damage Bonus", value=0)
-            ui.label("Statistic Modifiers").style("margin-top: 0.5rem")
-            stat_inputs: dict[Statistic, any] = {}
-            with ui.column():
-                for stat in Statistic:
-                    stat_inputs[stat] = ui.number(stat.value, value=0)
-            ui.label("Save Modifiers").style("margin-top: 0.5rem")
-            save_inputs: dict[Save, any] = {}
-            with ui.row().classes("gap-4"):
-                for save in Save:
-                    save_inputs[save] = ui.number(save.value, value=0)
-            warn_label = ui.label("At least one non-name value is required.").style(
-                "color: #b00020"
+        with ui.card().style("width: 75vw; max-width: 75vw"):
+            ui.label("Add Status").classes("text-xl font-bold text-center")
+
+            # Basic inputs
+            name_input = ui.input("Name").props("outlined clearable").classes("w-full")
+            with ui.row():
+                status_attack_input = ui.number(label="Attack Bonus", value=0).props(
+                    "outlined dense"
+                )
+                status_damage_input = ui.number(label="Damage Bonus", value=0).props(
+                    "outlined dense"
+                )
+
+            def clear_warning(_=None):
+                warn_label.text = ""
+                warn_label.visible = False
+                name_input.props("error=false error-message=")
+
+            # Enum entry sections: Statistics, Saves, AC Bonuses
+            ui.separator()
+            stat_entries = _create_enum_entry_section(
+                Statistic, on_change=clear_warning
+            )
+            ui.separator()
+            save_entries = _create_enum_entry_section(Save, on_change=clear_warning)
+            ui.separator()
+            ac_entries = _create_enum_entry_section(ACType, on_change=clear_warning)
+
+            warn_label = (
+                ui.label("").classes("text-red-600").style("min-height: 1.5rem")
             )
             warn_label.visible = False
-            with ui.row():
 
-                def create_status():
-                    name = (status_name_input.value or "").strip()
-                    if not name:
-                        warn_label.visible = False
-                        status_name_input.props(
-                            'error error-message="Name is required"'
-                        )
-                        return
-                    non_default = bool(int(status_attack_input.value or 0)) or bool(
-                        int(status_damage_input.value or 0)
-                    )
-                    if not non_default:
-                        for inp in stat_inputs.values():
-                            try:
-                                if int(inp.value or 0) != 0:
-                                    non_default = True
-                                    break
-                            except Exception:
-                                continue
-                    if not non_default:
-                        for inp in save_inputs.values():
-                            try:
-                                if int(inp.value or 0) != 0:
-                                    non_default = True
-                                    break
-                            except Exception:
-                                continue
-                    if not non_default:
-                        warn_label.visible = True
-                        return
-                    warn_label.visible = False
-                    character = get_character()
-                    attack = int(status_attack_input.value or 0)
-                    damage = int(status_damage_input.value or 0)
-                    stats_dict = {}
-                    for stat, inp in stat_inputs.items():
-                        try:
-                            v = int(inp.value or 0)
-                        except Exception:
-                            v = 0
-                        if v:
-                            stats_dict[stat] = v
-                    saves_dict = {}
-                    for save, inp in save_inputs.items():
-                        try:
-                            v = int(inp.value or 0)
-                        except Exception:
-                            v = 0
-                        if v:
-                            saves_dict[save] = v
-                    character.statuses.append(
-                        create_status_effect(
-                            name,
-                            attack_bonus=attack,
-                            damage_bonus=damage,
-                            statistics=stats_dict,
-                            saves=saves_dict,
-                        )
-                    )
-                    status_name_input.value = ""
-                    status_name_input.props('error=false error-message=""')
-                    status_attack_input.value = 0
-                    status_damage_input.value = 0
-                    for inp in stat_inputs.values():
-                        inp.value = 0
-                    for inp in save_inputs.values():
-                        inp.value = 0
-                    status_dialog.close()
-                    render_statuses.refresh()
-                    update_combat_sections()
+            def validate_unique_name(name: str) -> bool:
+                character = get_character()
+                return name and all(s.name != name for s in character.statuses)
 
-                ui.button("Create", on_click=create_status).props("color=primary")
-                ui.button("Cancel", on_click=lambda: status_dialog.close())
+            def has_non_default_values() -> bool:
+                if int(status_attack_input.value or 0) != 0:
+                    return True
+                if int(status_damage_input.value or 0) != 0:
+                    return True
+                if stat_entries or save_entries or ac_entries:
+                    return True
+                return False
 
-            def clear_name_error(_):
-                status_name_input.props('error=false error-message=""')
-                warn_label.visible = False
-
-            status_name_input.on("input", clear_name_error)
-
-            def clear_warning(_):
-                warn_label.visible = False
-
+            name_input.on("input", clear_warning)
             status_attack_input.on("change", clear_warning)
             status_damage_input.on("change", clear_warning)
-            for inp in stat_inputs.values():
-                inp.on("change", clear_warning)
-            for inp in save_inputs.values():
-                inp.on("change", clear_warning)
+
+            def submit(_=None):
+                name = (name_input.value or "").strip()
+                if not name:
+                    name_input.props('error=true error-message="Name is required"')
+                    warn_label.text = "Please provide a status name."
+                    warn_label.visible = True
+                    return
+                if not validate_unique_name(name):
+                    name_input.props('error=true error-message="Name must be unique"')
+                    warn_label.text = "Status name must be unique."
+                    warn_label.visible = True
+                    return
+                if not has_non_default_values():
+                    warn_label.text = "At least one non-default value is required."
+                    warn_label.visible = True
+                    return
+
+                attack_bonus = int(status_attack_input.value or 0)
+                damage_bonus = int(status_damage_input.value or 0)
+                statistics = {s: v for s, v in stat_entries.items()}
+                saves = {s: v for s, v in save_entries.items()}
+                ac_bonuses = {t: v for t, v in ac_entries.items()}
+
+                character = get_character()
+                new_status = create_status_effect(
+                    name=name,
+                    attack_bonus=attack_bonus,
+                    damage_bonus=damage_bonus,
+                    statistics=statistics,
+                    saves=saves,
+                    ac_bonuses=ac_bonuses,
+                )
+                character.statuses.append(new_status)
+
+                status_dialog.close()
+                render_statuses.refresh()
+                update_combat_sections()
+                app.storage.tab["statuses_expanded"] = expanded
+
+            def cancel(_=None):
+                status_dialog.close()
+
+            # Enter key submits
+            name_input.on("keydown.enter", submit)
+            status_attack_input.on("keydown.enter", submit)
+            status_damage_input.on("keydown.enter", submit)
+
+            with ui.row().classes("justify-end gap-2"):
+                ui.button("Cancel", on_click=cancel).props("flat color=grey")
+                ui.button("Create", on_click=submit).props("color=primary")
+
     return status_dialog
 
 

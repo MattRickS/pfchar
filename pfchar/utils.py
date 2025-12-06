@@ -57,12 +57,17 @@ class CustomEffect(Effect):
         damage_bonus: int,
         statistics: dict[Statistic, int],
         saves: dict[Save, int],
+        ac_bonuses: dict[ACType, int] = None,
     ):
         super().__init__(name=name)
         self._attack_bonus = attack_bonus
         self._damage_bonus = damage_bonus
         self._statistics = statistics
         self._saves = saves
+        self._ac_bonuses = ac_bonuses or {}
+
+    def armour_class_bonus(self, character):
+        return self._ac_bonuses.copy()
 
     def statistic_bonus(self, character, statistic):
         return self._statistics.get(statistic, 0)
@@ -88,8 +93,16 @@ def create_status_effect(
     damage_bonus: int = 0,
     statistics: dict[Statistic, int] = None,
     saves: dict[Save, int] = None,
+    ac_bonuses: dict[ACType, int] = None,
 ) -> "Effect":
-    return CustomEffect(name, attack_bonus, damage_bonus, statistics or {}, saves or {})
+    return CustomEffect(
+        name,
+        attack_bonus,
+        damage_bonus,
+        statistics or {},
+        saves or {},
+        ac_bonuses or {},
+    )
 
 
 BASE_AC = 10
