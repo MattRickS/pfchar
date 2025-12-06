@@ -167,9 +167,7 @@ def render_combat_modifiers():
     cmb_total = sum(cmb_breakdown.values()) if cmb_breakdown else 0
     cmd_total = sum(cmd_breakdown.values()) if cmd_breakdown else 0
     with header_expansion("Combat Modifiers", default=True):
-        with ui.element("div").classes(
-            "grid grid-cols-1 md:grid-cols-6 gap-2 items-start"
-        ):
+        with ui.row():
             ui.switch(
                 "Two Handed",
                 value=character.is_two_handed(),
@@ -182,6 +180,10 @@ def render_combat_modifiers():
                         value=effect.condition.enabled,
                         on_change=make_handler(effect),
                     )
+
+        with ui.element("div").classes(
+            "grid grid-cols-1 md:grid-cols-6 gap-2 items-start"
+        ):
             render_combat_mod(
                 f"To Hit {attack_string}",
                 (f"{name}: {val:+d}" for name, val in attack_mods.items()),
