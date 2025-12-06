@@ -227,6 +227,7 @@ def render_combat_modifiers():
                     f"{save.value} {sum(data.values()):+d}",
                     (f"{name}: {val:+d}" for name, val in data.items()),
                 )
+            render_combat_mod(f"HP Offset: {character.get_hp_offset():+d}", ())
 
 
 def open_add_status_dialog():

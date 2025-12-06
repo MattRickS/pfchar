@@ -225,3 +225,13 @@ class Character:
                     saves[save][effect.name] = value
 
         return saves
+
+    def get_hp_offset(self) -> int:
+        con = self.modified_statistic(Statistic.CONSTITUTION)
+        status_con_offset = sum(
+            effect.statistic_bonus(self, Statistic.CONSTITUTION)
+            for effect in self.statuses
+        )
+        statusless_con = con - status_con_offset
+        offset = stat_modifier(con) - stat_modifier(statusless_con)
+        return self.level * offset
