@@ -439,20 +439,14 @@ def create_status_dialog():
                     warn_label.visible = True
                     return
 
-                attack_bonus = int(status_attack_input.value or 0)
-                damage_bonus = int(status_damage_input.value or 0)
-                statistics = {s: v for s, v in stat_entries.items()}
-                saves = {s: v for s, v in save_entries.items()}
-                ac_bonuses = {t: v for t, v in ac_entries.items()}
-
                 character = get_character()
                 new_status = create_status_effect(
                     name=name,
-                    attack_bonus=attack_bonus,
-                    damage_bonus=damage_bonus,
-                    statistics=statistics,
-                    saves=saves,
-                    ac_bonuses=ac_bonuses,
+                    attack_bonus=status_attack_input.value,
+                    damage_bonus=status_damage_input.value,
+                    statistics=stat_entries,
+                    saves=save_entries,
+                    ac_bonuses=ac_entries,
                 )
                 character.statuses.append(new_status)
 

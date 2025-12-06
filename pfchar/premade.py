@@ -30,18 +30,18 @@ from pfchar.char.feats import (
 
 YOYU = Character(
     name="Yoyu Tekko",
-    level=19,
+    level=20,
     statistics={
-        Statistic.STRENGTH: 19,
+        Statistic.STRENGTH: 20,
         Statistic.DEXTERITY: 14,
         Statistic.CONSTITUTION: 14,
         Statistic.INTELLIGENCE: 12,
         Statistic.WISDOM: 12,
         Statistic.CHARISMA: 10,
     },
-    base_attack_bonus=19,
+    base_attack_bonus=20,
     base_saves={
-        Save.FORTITUDE: 11,
+        Save.FORTITUDE: 12,
         Save.REFLEX: 6,
         Save.WILL: 6,
     },
@@ -86,13 +86,13 @@ YOYU = Character(
 
 DORAMAK = Character(
     name="Doramak Colegard",
-    level=19,
+    level=20,
     statistics={
         Statistic.STRENGTH: 16,
         Statistic.DEXTERITY: 12,
         Statistic.CONSTITUTION: 12,
         Statistic.INTELLIGENCE: 10,
-        Statistic.WISDOM: 19,
+        Statistic.WISDOM: 20,
         Statistic.CHARISMA: 12,
     },
     base_attack_bonus=15,
@@ -148,7 +148,7 @@ DORAMAK = Character(
 
 CHELLYBEAN = Character(
     name="Chellybean Smith",
-    level=19,
+    level=20,
     size=Size.SMALL,
     statistics={
         Statistic.STRENGTH: 10,
@@ -158,10 +158,10 @@ CHELLYBEAN = Character(
         Statistic.WISDOM: 12,
         Statistic.CHARISMA: 14,
     },
-    base_attack_bonus=13,
+    base_attack_bonus=14,
     base_saves={
         Save.FORTITUDE: 8,
-        Save.REFLEX: 17,
+        Save.REFLEX: 18,
         Save.WILL: 7,
     },
     main_hand=Weapon(
