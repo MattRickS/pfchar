@@ -1,7 +1,7 @@
 import dataclasses
 from typing import TYPE_CHECKING
 
-from pfchar.char.base import ACType, CriticalBonus, Dice, Effect, WeaponType
+from pfchar.char.base import ArmorBonus, CriticalBonus, Dice, Effect, WeaponType
 from pfchar.char.conditions import EnabledCondition, WeaponTypeCondition
 
 if TYPE_CHECKING:
@@ -16,8 +16,8 @@ class Dodge(Feat):
     def __init__(self, name: str = "Dodge"):
         super().__init__(name=name)
 
-    def armour_class_bonus(self, character: "Character") -> dict[ACType, int]:
-        return {ACType.DODGE: 1}
+    def armour_class_bonus(self, character: "Character") -> dict[ArmorBonus, int]:
+        return {ArmorBonus.DODGE: 1}
 
 
 @dataclasses.dataclass

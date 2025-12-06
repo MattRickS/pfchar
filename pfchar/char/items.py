@@ -2,7 +2,7 @@ import dataclasses
 from typing import TYPE_CHECKING
 
 from pfchar.char.base import (
-    ACType,
+    ArmorBonus,
     CriticalBonus,
     Dice,
     Effect,
@@ -78,14 +78,14 @@ class Armour(Item):
     spell_failure_chance: int = 0
     # Armour type, eg, light, medium, heavy. Affects speed.
 
-    def armour_class_bonus(self, character: "Character") -> dict[ACType, int]:
+    def armour_class_bonus(self, character: "Character") -> dict[ArmorBonus, int]:
         bonuses = {}
         if self.shield_bonus:
-            bonuses[ACType.SHIELD] = self.shield_bonus
+            bonuses[ArmorBonus.SHIELD] = self.shield_bonus
         if self.armour_bonus:
-            bonuses[ACType.ARMOR] = self.armour_bonus
+            bonuses[ArmorBonus.ARMOR] = self.armour_bonus
         if self.enhancement_bonus:
-            bonuses[ACType.ENHANCEMENT] = self.enhancement_bonus
+            bonuses[ArmorBonus.ENHANCEMENT] = self.enhancement_bonus
         return bonuses
 
 
@@ -114,8 +114,8 @@ class AmuletOfNaturalArmor(Item):
         super().__init__(name=f"Amulet of Natural Armor (+{bonus})")
         self.bonus = bonus
 
-    def armour_class_bonus(self, character: "Character") -> dict[ACType, int]:
-        return {ACType.NATURAL: self.bonus}
+    def armour_class_bonus(self, character: "Character") -> dict[ArmorBonus, int]:
+        return {ArmorBonus.NATURAL: self.bonus}
 
 
 @dataclasses.dataclass
@@ -124,8 +124,8 @@ class RingOfProtection(Item):
         super().__init__(name=f"Ring of Protection (+{bonus})")
         self.bonus = bonus
 
-    def armour_class_bonus(self, character: "Character") -> dict[ACType, int]:
-        return {ACType.DEFLECTION: self.bonus}
+    def armour_class_bonus(self, character: "Character") -> dict[ArmorBonus, int]:
+        return {ArmorBonus.DEFLECTION: self.bonus}
 
 
 @dataclasses.dataclass

@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING
 
-from pfchar.char.base import BAB_KEY, ACType, Effect, Dice, Save, Statistic
+from pfchar.char.base import BAB_KEY, ArmorBonus, Effect, Dice, Save, Statistic
 
 if TYPE_CHECKING:
     from pfchar.char.base import CriticalBonus
@@ -57,7 +57,7 @@ class CustomEffect(Effect):
         damage_bonus: int,
         statistics: dict[Statistic, int],
         saves: dict[Save, int],
-        ac_bonuses: dict[ACType, int] = None,
+        ac_bonuses: dict[ArmorBonus, int] = None,
     ):
         super().__init__(name=name)
         self._attack_bonus = attack_bonus
@@ -93,7 +93,7 @@ def create_status_effect(
     damage_bonus: int = 0,
     statistics: dict[Statistic, int] = None,
     saves: dict[Save, int] = None,
-    ac_bonuses: dict[ACType, int] = None,
+    ac_bonuses: dict[ArmorBonus, int] = None,
 ) -> "Effect":
     return CustomEffect(
         name,
@@ -106,15 +106,15 @@ def create_status_effect(
 
 
 BASE_AC = 10
-IGNORE_TOUCH_AC_TYPES = {ACType.NATURAL, ACType.ARMOR, ACType.SHIELD}
-IGNORE_FLAT_FOOTED_AC_TYPES = {ACType.DEXTERITY, ACType.DODGE}
+IGNORE_TOUCH_AC_TYPES = {ArmorBonus.NATURAL, ArmorBonus.ARMOR, ArmorBonus.SHIELD}
+IGNORE_FLAT_FOOTED_AC_TYPES = {ArmorBonus.DEXTERITY, ArmorBonus.DODGE}
 
 
-def get_total_ac(ac_bonuses: dict["ACType", int]) -> int:
+def get_total_ac(ac_bonuses: dict["ArmorBonus", int]) -> int:
     return BASE_AC + sum(val for val in ac_bonuses.values())
 
 
-def get_touch_ac(ac_bonuses: dict["ACType", int]) -> int:
+def get_touch_ac(ac_bonuses: dict["ArmorBonus", int]) -> int:
     return BASE_AC + sum(
         val
         for ac_type, val in ac_bonuses.items()
@@ -122,7 +122,7 @@ def get_touch_ac(ac_bonuses: dict["ACType", int]) -> int:
     )
 
 
-def get_flat_footed_ac(ac_bonuses: dict["ACType", int]) -> int:
+def get_flat_footed_ac(ac_bonuses: dict["ArmorBonus", int]) -> int:
     return BASE_AC + sum(
         val
         for ac_type, val in ac_bonuses.items()

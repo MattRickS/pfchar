@@ -36,7 +36,7 @@ class Save(enum.StrEnum):
     WILL = "Will"
 
 
-class ACType(enum.StrEnum):
+class ArmorBonus(enum.StrEnum):
     ARMOR = "Armor"
     SHIELD = "Shield"
     DEXTERITY = "Dexterity"
@@ -131,7 +131,7 @@ class Effect:
             return [Dice(bonus)]
         return []
 
-    def armour_class_bonus(self, character: "Character") -> dict[ACType, int]:
+    def armour_class_bonus(self, character: "Character") -> dict[ArmorBonus, int]:
         # Technically things like mage armour apply "armor" type but as force
         # which incorporeal attacks can't bypass. For now we ignore that distinction.
         return {}

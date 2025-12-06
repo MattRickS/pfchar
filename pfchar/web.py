@@ -11,7 +11,7 @@ This may or may not work for multiple users.
 
 from nicegui import app, ui
 
-from pfchar.char.base import stat_modifier, ACType, Save, Statistic
+from pfchar.char.base import stat_modifier, ArmorBonus, Save, Statistic
 from pfchar.utils import (
     crit_to_string,
     sum_up_dice,
@@ -190,7 +190,10 @@ def render_combat_modifiers():
                     f"AC: {total_ac:d} (touch: {touch_ac:d}, flat-footed: {flat_footed_ac:d})"
                 ).style("font-weight: bold; text-align: center"):
                     for ac_type, val in ac_bonuses.items():
-                        if ac_type == ACType.DEXTERITY and character.is_dex_capped():
+                        if (
+                            ac_type == ArmorBonus.DEXTERITY
+                            and character.is_dex_capped()
+                        ):
                             val = f"{val:+d} (capped)"
                         else:
                             val = f"{val:+d}"
@@ -279,12 +282,24 @@ def on_character_change(name: str):
     render_page.refresh()
 
 
-def _create_enum_entry_section(enum_class: type, on_change=None):
+def _create_enum_entry_section(
+    enum_class: type,
+    group_options: dict[str, tuple[type]] = None,
+    on_change=None,
+    default=None,
+):
+    options = {(s,): s.value for s in enum_class}
+    if group_options:
+        options.update({v: k for k, v in group_options.items()})
+
+    if default is not None and not isinstance(default, tuple):
+        default = (default,)
+
     with ui.expansion(f"{enum_class.__name__} Modifiers").classes("font-semibold mt-2"):
         entries: dict = {}
         with ui.row():
             enum_select = ui.select(
-                {s: s.value for s in enum_class}, label="Statistic"
+                options, value=default, label=enum_class.__name__
             ).props("outlined dense")
             enum_value = ui.number(label="Value", value=0).props("outlined dense")
 
@@ -300,7 +315,7 @@ def _create_enum_entry_section(enum_class: type, on_change=None):
             if v == 0:
                 return
 
-            entries[enum_select.value] = v
+            entries.update({e: v for e in enum_select.value})
             enum_select.set_value(None)
             enum_value.set_value(0)
             refresh_entries()
@@ -356,12 +371,34 @@ def create_status_dialog():
             # Enum entry sections: Statistics, Saves, AC Bonuses
             ui.separator()
             stat_entries = _create_enum_entry_section(
-                Statistic, on_change=clear_warning
+                Statistic,
+                group_options={
+                    "All": tuple(Statistic),
+                    "Physical": (
+                        Statistic.STRENGTH,
+                        Statistic.DEXTERITY,
+                        Statistic.CONSTITUTION,
+                    ),
+                    "Mental": (
+                        Statistic.INTELLIGENCE,
+                        Statistic.WISDOM,
+                        Statistic.CHARISMA,
+                    ),
+                },
+                default=Statistic.STRENGTH,
+                on_change=clear_warning,
             )
             ui.separator()
-            save_entries = _create_enum_entry_section(Save, on_change=clear_warning)
+            save_entries = _create_enum_entry_section(
+                Save,
+                group_options={"All": tuple(Save)},
+                default=Save.FORTITUDE,
+                on_change=clear_warning,
+            )
             ui.separator()
-            ac_entries = _create_enum_entry_section(ACType, on_change=clear_warning)
+            ac_entries = _create_enum_entry_section(
+                ArmorBonus, default=ArmorBonus.DEFLECTION, on_change=clear_warning
+            )
 
             warn_label = (
                 ui.label("").classes("text-red-600").style("min-height: 1.5rem")

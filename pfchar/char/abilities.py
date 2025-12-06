@@ -1,8 +1,8 @@
 import dataclasses
 from typing import TYPE_CHECKING
 
-from pfchar.char.base import ACType, CriticalBonus, Dice, Effect, WeaponType
-from pfchar.char.conditions import EnabledCondition, WeaponTypeCondition
+from pfchar.char.base import CriticalBonus, Effect, WeaponType
+from pfchar.char.conditions import WeaponTypeCondition
 
 if TYPE_CHECKING:
     from pfchar.char.character import Character

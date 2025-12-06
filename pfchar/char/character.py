@@ -3,7 +3,7 @@ import dataclasses
 from pfchar.char.base import (
     BAB_KEY,
     stat_modifier,
-    ACType,
+    ArmorBonus,
     CriticalBonus,
     Dice,
     Effect,
@@ -124,14 +124,14 @@ class Character:
 
         return bonus
 
-    def armour_bonuses(self) -> dict[ACType, int]:
-        bonuses = {ac_type: 0 for ac_type in ACType}
-        bonuses[ACType.SIZE] = -self.size.value
+    def armour_bonuses(self) -> dict[ArmorBonus, int]:
+        bonuses = {ac_type: 0 for ac_type in ArmorBonus}
+        bonuses[ArmorBonus.SIZE] = -self.size.value
 
         # Enhancements for armour and shield stack, but only the highest bonus applies to each.
         enhancements = {
-            ACType.SHIELD: 0,
-            ACType.ARMOR: 0,
+            ArmorBonus.SHIELD: 0,
+            ArmorBonus.ARMOR: 0,
         }
         max_dex_bonus = 99
         for effect in self.all_effects():
@@ -140,7 +140,7 @@ class Character:
 
             # An enhancement bonus must come from either the armor or shield,
             # and will eventually stack, though only the highest bonus applies to each.
-            if enhancement_bonus := ac_bonuses.pop(ACType.ENHANCEMENT, 0):
+            if enhancement_bonus := ac_bonuses.pop(ArmorBonus.ENHANCEMENT, 0):
                 overlap = set(enhancements).intersection(ac_bonuses)
                 assert overlap, "Enhancement bonus must apply to armor or shield"
                 for ac_type in overlap:
@@ -149,16 +149,16 @@ class Character:
                     )
 
             # All penalties are added, not just the highest.
-            if enhancement_bonus := ac_bonuses.pop(ACType.PENALTY, 0):
-                bonuses[ACType.PENALTY] += enhancement_bonus
+            if enhancement_bonus := ac_bonuses.pop(ArmorBonus.PENALTY, 0):
+                bonuses[ArmorBonus.PENALTY] += enhancement_bonus
 
             for ac_type, value in ac_bonuses.items():
                 bonuses[ac_type] = max(bonuses[ac_type], value)
 
-        bonuses[ACType.DEXTERITY] = min(
+        bonuses[ArmorBonus.DEXTERITY] = min(
             stat_modifier(self.modified_statistic(Statistic.DEXTERITY)), max_dex_bonus
         )
-        bonuses[ACType.ENHANCEMENT] = sum(enhancements.values())
+        bonuses[ArmorBonus.ENHANCEMENT] = sum(enhancements.values())
 
         return {ac_type: value for ac_type, value in bonuses.items() if value}
 
@@ -195,14 +195,14 @@ class Character:
             for ac_type, val in ac_bonuses.items()
             if ac_type
             in (
-                ACType.DEFLECTION,
-                ACType.DODGE,
-                ACType.INSIGHT,
-                ACType.LUCK,
-                ACType.MORALE,
-                ACType.PROFANE,
-                ACType.SACRED,
-                ACType.PENALTY,
+                ArmorBonus.DEFLECTION,
+                ArmorBonus.DODGE,
+                ArmorBonus.INSIGHT,
+                ArmorBonus.LUCK,
+                ArmorBonus.MORALE,
+                ArmorBonus.PROFANE,
+                ArmorBonus.SACRED,
+                ArmorBonus.PENALTY,
             )
         }
         modifiers = {
