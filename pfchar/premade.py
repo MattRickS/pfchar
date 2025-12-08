@@ -87,7 +87,19 @@ YOYU = Character(
     statuses=[
         utils.create_status_effect(
             "Vestment of the Champion", ac_bonuses={ArmorBonus.ARMOR_ENHANCEMENT: 5}
-        )
+        ),
+        utils.create_status_effect("Weapon of Awe", attack_bonus=2),
+        utils.create_status_effect(
+            "Haste",
+            attack_bonus=1,
+            ac_bonuses={ArmorBonus.DODGE: 1},
+            saves={Save.REFLEX: 1},
+        ),
+        utils.create_status_effect(
+            "Shield of Law",
+            ac_bonuses={ArmorBonus.DEFLECTION: 4},
+            saves={Save.REFLEX: 4, Save.WILL: 4, Save.FORTITUDE: 4},
+        ),
     ],
 )
 
