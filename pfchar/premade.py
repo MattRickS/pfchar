@@ -1,4 +1,5 @@
 from pfchar.char.base import (
+    ArmorBonus,
     CriticalBonus,
     Dice,
     Save,
@@ -6,6 +7,7 @@ from pfchar.char.base import (
     Statistic,
     WeaponType,
 )
+from pfchar.char.abilities import WeaponsMastery
 from pfchar.char.character import Character
 from pfchar.char.enchantments import FlamingBurst, Merciful, Sneaky
 from pfchar.char.items import (
@@ -27,6 +29,7 @@ from pfchar.char.feats import (
     WeaponTraining,
     ImprovedCritical,
 )
+from pfchar import utils
 
 YOYU = Character(
     name="Yoyu Tekko",
@@ -58,6 +61,7 @@ YOYU = Character(
         #       burst damage, but weapon is calculated first _including_ effects.
         enchantments=[FlamingBurst()],
     ),
+    abilities=[WeaponsMastery(WeaponType.HAMMER)],
     feats=[
         PowerAttack(),
         WeaponFocus(WeaponType.HAMMER),
@@ -80,8 +84,11 @@ YOYU = Character(
         RingOfProtection(bonus=2),
         CloakOfResistance(bonus=5),
     ],
-    # TODO: The status effect should be added to the Armour item itself
-    # statuses=[create_status_effect("Vestment of the Champion", ac_bonuses={ACType.ENHANCEMENT: 5})],
+    statuses=[
+        utils.create_status_effect(
+            "Vestment of the Champion", ac_bonuses={ArmorBonus.ARMOR_ENHANCEMENT: 5}
+        )
+    ],
 )
 
 DORAMAK = Character(
@@ -205,14 +212,16 @@ CHELLYBEAN = Character(
                 Statistic.DEXTERITY: 6,
             },
         ),
-        Weapon(
-            name="+1 Rat Ring",
-            type=WeaponType.UNARMED,  # ?
-            enchantment_modifier=1,
-            base_damage=Dice(num=1, sides=3),
-            is_light=True,
-            # Part of a full round action
-        ),
+        # This just adds an extra attack, but with the app summary it's
+        # misleading as it counts the enhancement twice.
+        # Weapon(
+        #     name="+1 Rat Ring",
+        #     type=WeaponType.UNARMED,  # ?
+        #     enchantment_modifier=1,
+        #     base_damage=Dice(num=1, sides=3),
+        #     is_light=True,
+        #     # Part of a full round action
+        # ),
         Item(name="Shirt of Movement"),
         Item(
             name="Gloomstrider",
