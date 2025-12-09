@@ -31,6 +31,10 @@ from pfchar.char.feats import (
 )
 from pfchar import utils
 
+heroes_feast = utils.create_status_effect(
+    "Hero's Feast", attack_bonus=1, saves={Save.WILL: 1}
+)
+
 YOYU = Character(
     name="Yoyu Tekko",
     level=20,
@@ -100,6 +104,15 @@ YOYU = Character(
             ac_bonuses={ArmorBonus.DEFLECTION: 4},
             saves={Save.REFLEX: 4, Save.WILL: 4, Save.FORTITUDE: 4},
         ),
+        heroes_feast,
+        utils.create_status_effect(
+            "Enlarge Person",
+            size_change=1,
+            statistics={
+                Statistic.STRENGTH: 2,
+                Statistic.DEXTERITY: -2,
+            },
+        ),
     ],
 )
 
@@ -162,13 +175,21 @@ DORAMAK = Character(
         CloakOfResistance(bonus=3),  # Upgraded
         AmuletOfNaturalArmor(bonus=2),  # Made
     ],
+    statuses=[
+        heroes_feast,
+        utils.create_status_effect(
+            # Technically +7 enhancement, not supported, so adding it to the base +3 here.
+            "Ironskin",
+            ac_bonuses={ArmorBonus.NATURAL: 10},
+        ),
+    ],
 )
 
 
 CHELLYBEAN = Character(
     name="Chellybean Smith",
     level=20,
-    size=Size.SMALL,
+    base_size=Size.SMALL,
     statistics={
         Statistic.STRENGTH: 10,
         Statistic.DEXTERITY: 18,
@@ -262,6 +283,13 @@ CHELLYBEAN = Character(
             #   - Stealth check +10
             # Every attack target must pass DC 17 Will or attack has Feint
             #   - Feint not applicable to creatures that can see through Illusions
+        ),
+    ],
+    statuses=[
+        heroes_feast,
+        utils.create_status_effect(
+            "Bear's Endurance",
+            statistics={Statistic.CONSTITUTION: 4},
         ),
     ],
 )

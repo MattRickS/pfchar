@@ -70,7 +70,7 @@ def stat_modifier(value: int) -> int:
     return (value - 10) // 2
 
 
-@dataclasses.dataclass
+@dataclasses.dataclass(eq=True, frozen=True)
 class Dice:
     num: int
     sides: int = 1
@@ -139,3 +139,6 @@ class Effect:
 
     def saves_bonuses(self, character: "Character") -> dict[Save, int]:
         return {}
+
+    def size_change(self, character: "Character") -> int:
+        return 0

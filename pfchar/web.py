@@ -11,7 +11,7 @@ This may or may not work for multiple users.
 
 from nicegui import app, ui
 
-from pfchar.char.base import stat_modifier, ArmorBonus, Save, Statistic
+from pfchar.char.base import stat_modifier, ArmorBonus, Save, Size, Statistic
 from pfchar.utils import (
     crit_to_string,
     sum_up_dice,
@@ -63,16 +63,16 @@ def render_statistics():
             modified_modifier = stat_modifier(modified_value)
             if modified_value != value:
                 ui.label(
-                    f"{stat.value}: {value} ({modifier:+d}) -> {modified_value} ({modified_modifier:+d})"
+                    f"{stat.value}: {value} ({int(modifier):+d}) -> {modified_value} ({int(modified_modifier):+d})"
                 )
             else:
-                ui.label(f"{stat.value}: {value} ({modifier:+d})")
+                ui.label(f"{stat.value}: {value} ({int(modifier):+d})")
 
 
 def render_weapons():
     with header_expansion("Weapons"):
         character = get_character()
-        ui.label(f"Base Attack Bonus: {character.base_attack_bonus:+d}")
+        ui.label(f"Base Attack Bonus: {int(character.base_attack_bonus):+d}")
         if character.main_hand:
             w = character.main_hand
             dmg_str = sum_up_dice(w.damage_bonus(character))
@@ -186,7 +186,7 @@ def render_combat_modifiers():
         ):
             render_combat_mod(
                 f"To Hit {attack_string}",
-                (f"{name}: {val:+d}" for name, val in attack_mods.items()),
+                (f"{name}: {int(val):+d}" for name, val in attack_mods.items()),
             )
             render_combat_mod(
                 f"Damage {damage_total_str}/{crit_to_string(critical_bonus)}",
@@ -203,31 +203,32 @@ def render_combat_modifiers():
                 (
                     (
                         (
-                            f"{ac_type.value}: {val:+d} (capped)"
+                            f"{ac_type.value}: {int(val):+d} (capped)"
                             if (
                                 ac_type == ArmorBonus.DEXTERITY
                                 and character.is_dex_capped()
                             )
-                            else f"{ac_type.value}: {val:+d}"
+                            else f"{ac_type.value}: {int(val):+d}"
                         )
                         for ac_type, val in ac_bonuses.items()
                     )
                 ),
             )
             render_combat_mod(
-                f"CMB {cmb_total:+d}",
-                (f"{name}: {val:+d}" for name, val in cmb_breakdown.items()),
+                f"CMB {int(cmb_total):+d}",
+                (f"{name}: {int(val):+d}" for name, val in cmb_breakdown.items()),
             )
             render_combat_mod(
-                f"CMD {cmd_total:+d}",
-                (f"{name}: {val:+d}" for name, val in cmd_breakdown.items()),
+                f"CMD {int(cmd_total):+d}",
+                (f"{name}: {int(val):+d}" for name, val in cmd_breakdown.items()),
             )
             for save, data in saves_breakdown.items():
                 render_combat_mod(
-                    f"{save.value} {sum(data.values()):+d}",
-                    (f"{name}: {val:+d}" for name, val in data.items()),
+                    f"{save.value} {int(sum(data.values())):+d}",
+                    (f"{name}: {int(val):+d}" for name, val in data.items()),
                 )
-            render_combat_mod(f"HP Offset: {character.get_hp_offset():+d}", ())
+            render_combat_mod(f"HP Offset: {int(character.get_hp_offset()):+d}", ())
+            render_combat_mod(f"Size: {character.get_size().name}", ())
 
 
 def open_add_status_dialog():
@@ -340,7 +341,7 @@ def _create_enum_entry_section(
             for s, v in entries.items():
                 with ui_entries:
                     with ui.row().classes("items-center justify-between"):
-                        ui.label(f"{s.value}: {v:+d}")
+                        ui.label(f"{s.value}: {int(v):+d}")
                         ui.button(
                             icon="delete",
                             on_click=lambda _, key=s: (
@@ -358,6 +359,7 @@ def _create_enum_entry_section(
 def create_status_dialog():
     status_dialog = ui.dialog()
     expanded = getattr(app.storage.tab, "statuses_expanded", True)
+    character = get_character()
 
     with status_dialog:
         with ui.card().style("width: 75vw; max-width: 75vw"):
@@ -409,6 +411,14 @@ def create_status_dialog():
             ac_entries = _create_enum_entry_section(
                 ArmorBonus, default=ArmorBonus.DEFLECTION, on_change=clear_warning
             )
+            ui.separator()
+            with ui.expansion(f"Size Modifier").classes("font-semibold mt-2"):
+                index = tuple(Size).index(character.base_size)
+                size_change_selector = ui.select(
+                    {i - index: size.name for i, size in enumerate(Size)},
+                    value=0,
+                    label="Size Change",
+                ).props("outlined dense")
 
             warn_label = (
                 ui.label("").classes("text-red-600").style("min-height: 1.5rem")
@@ -457,6 +467,7 @@ def create_status_dialog():
                     statistics=stat_entries,
                     saves=save_entries,
                     ac_bonuses=ac_entries,
+                    size_change=size_change_selector.value,
                 )
                 character.statuses.append(new_status)
 

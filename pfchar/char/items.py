@@ -11,6 +11,7 @@ from pfchar.char.base import (
     WeaponType,
 )
 from pfchar.char.enchantments import WeaponEnchantment
+from pfchar import utils
 
 if TYPE_CHECKING:
     from pfchar.char.character import Character
@@ -44,10 +45,18 @@ class Weapon(Item):
         return self.enchantment_modifier
 
     def damage_bonus(self, character: "Character") -> list[Dice]:
+        base_damage = Dice(
+            self.base_damage.num,
+            sides=self.base_damage.sides,
+        )
+        if character.base_size != character.get_size():
+            from_size = character.base_size
+            to_size = character.get_size()
+            base_damage = utils.get_damage_progression(base_damage, from_size, to_size)
         return [
             Dice(
-                self.base_damage.num,
-                sides=self.base_damage.sides,
+                base_damage.num,
+                sides=base_damage.sides,
                 modifier=self.enchantment_modifier,
             )
         ] + [

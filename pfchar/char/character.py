@@ -20,7 +20,7 @@ from pfchar.char.abilities import Ability
 class Character:
     name: str = "Character"
     level: int = 1
-    size: Size = Size.MEDIUM
+    base_size: Size = Size.MEDIUM
     statistics: dict[Statistic, int] = dataclasses.field(
         default_factory=lambda: {
             Statistic.STRENGTH: 10,
@@ -124,9 +124,17 @@ class Character:
 
         return bonus
 
+    def get_size(self) -> Size:
+        size_change = sum(effect.size_change(self) for effect in self.all_effects())
+        sizes = tuple(Size)
+        pos = sizes.index(self.base_size)
+        pos += size_change
+        pos = max(0, min(pos, len(sizes) - 1))
+        return sizes[pos]
+
     def armour_bonuses(self) -> dict[ArmorBonus, int]:
         bonuses = {ac_type: 0 for ac_type in ArmorBonus}
-        bonuses[ArmorBonus.SIZE] = -self.size.value
+        bonuses[ArmorBonus.SIZE] = -self.get_size().value
 
         max_dex_bonus = 99
         for effect in self.all_effects():
@@ -157,10 +165,9 @@ class Character:
         )
 
     def get_cmb(self) -> dict[str, int]:
+        size = self.get_size()
         statistic = (
-            Statistic.DEXTERITY
-            if self.size.value <= Size.TINY.value
-            else Statistic.STRENGTH
+            Statistic.DEXTERITY if size.value <= Size.TINY.value else Statistic.STRENGTH
         )
         modifiers = {
             BAB_KEY: self.base_attack_bonus,
@@ -168,7 +175,7 @@ class Character:
             #       Either stat is always modified or stat modifying items are always separate line items.
             #       The former is much more straightforward, and likely more accurate.
             statistic.value: stat_modifier(self.modified_statistic(statistic)),
-            "Size": self.size.value,
+            "Size": size.value,
         }
         return {name: value for name, value in modifiers.items() if value}
 
@@ -198,7 +205,7 @@ class Character:
             Statistic.DEXTERITY.value: stat_modifier(
                 self.modified_statistic(Statistic.DEXTERITY)
             ),
-            "Size": self.size.value,
+            "Size": self.get_size().value,
             **applicable_ac_types,
         }
         return {name: value for name, value in modifiers.items() if value}

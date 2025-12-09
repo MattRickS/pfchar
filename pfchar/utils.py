@@ -1,10 +1,116 @@
 from typing import TYPE_CHECKING
 
-from pfchar.char.base import BAB_KEY, ArmorBonus, Effect, Dice, Save, Statistic
+from pfchar.char.base import BAB_KEY, ArmorBonus, Effect, Dice, Save, Size, Statistic
 
 if TYPE_CHECKING:
     from pfchar.char.base import CriticalBonus
     from pfchar.char.character import Character
+
+
+# https://paizo.com/paizo/faq/v5748nruor1fm#v5748eaic9t3f
+DAMAGE_PROGRESSION = [
+    Dice(num=1, sides=1),
+    Dice(num=1, sides=2),
+    Dice(num=1, sides=3),
+    Dice(num=1, sides=4),
+    Dice(num=1, sides=6),
+    Dice(num=1, sides=8),
+    Dice(num=1, sides=10),
+    Dice(num=2, sides=6),
+    Dice(num=2, sides=8),
+    Dice(num=3, sides=6),
+    Dice(num=3, sides=8),
+    Dice(num=4, sides=6),
+    Dice(num=4, sides=8),
+    Dice(num=6, sides=6),
+    Dice(num=6, sides=8),
+    Dice(num=8, sides=6),
+    Dice(num=8, sides=8),
+    Dice(num=12, sides=6),
+    Dice(num=12, sides=8),
+    Dice(num=16, sides=6),
+]
+
+
+def get_size_change(from_size: Size, to_size: Size) -> int:
+    sizes = tuple(Size)
+    from_index = sizes.index(from_size)
+    to_index = sizes.index(to_size)
+    return to_index - from_index
+
+
+def change_size(from_size: Size, size_change: int) -> Size:
+    sizes = tuple(Size)
+    from_index = sizes.index(from_size)
+    to_index = from_index + size_change
+    to_index = max(0, min(len(sizes) - 1, to_index))
+    return sizes[to_index]
+
+
+def get_closest_damage_progression_index(damage: Dice) -> int:
+    try:
+        index = DAMAGE_PROGRESSION.index(damage)
+    except ValueError:
+        if damage.sides == 6:
+            sixes = [
+                d for d in DAMAGE_PROGRESSION if d.sides == 6 and d.num < damage.num
+            ]
+            next_lowest_num = sixes[-1].num
+            damage = Dice(num=next_lowest_num, sides=8)
+            index = DAMAGE_PROGRESSION.index(damage)
+        elif damage.sides == 8:
+            eights = [
+                d for d in DAMAGE_PROGRESSION if d.sides == 8 and d.num > damage.num
+            ]
+            next_highest_num = eights[0].num
+            damage = Dice(num=next_highest_num, sides=6)
+            index = DAMAGE_PROGRESSION.index(damage)
+        else:
+            sums = [d.num * d.sides for d in DAMAGE_PROGRESSION]
+            damage_sum = damage.num * damage.sides
+            try:
+                s_index = sums.index(damage_sum)
+            except ValueError:
+                _, s_index = min((abs(s - damage_sum), i) for i, s in enumerate(sums))
+            damage = DAMAGE_PROGRESSION[s_index]
+            index = DAMAGE_PROGRESSION.index(damage)
+    return index
+
+
+def get_damage_progression(damage: Dice, from_size: Size, to_size: Size) -> Dice:
+    size_change = get_size_change(from_size, to_size)
+    if size_change == 0:
+        return damage
+
+    index = get_closest_damage_progression_index(damage)
+
+    # Increase by a single size step
+    offset = -1 if size_change < 0 else 1
+    if offset > 0:
+        if from_size.value <= Size.SMALL.value or index < DAMAGE_PROGRESSION.index(
+            Dice(num=1, sides=6)
+        ):
+            steps = 1
+        else:
+            steps = 2
+    elif offset < 0:
+        if to_size.value <= Size.MEDIUM.value or index <= DAMAGE_PROGRESSION.index(
+            Dice(num=1, sides=8)
+        ):
+            steps = -1
+        else:
+            steps = -2
+    else:
+        raise ValueError("Offset must be non-zero")
+
+    new_damage = DAMAGE_PROGRESSION[index + steps]
+
+    # If more size steps are required, recurse
+    if abs(size_change) > 1:
+        new_size = change_size(from_size, offset)
+        return get_damage_progression(new_damage, new_size, to_size)
+
+    return new_damage
 
 
 def sum_up_dice(dice_list: list[Dice]) -> str:
@@ -19,7 +125,7 @@ def sum_up_dice(dice_list: list[Dice]) -> str:
 
     string = "+".join(values)
     if modifier:
-        string += f" {modifier:+d}"
+        string += f" {int(modifier):+d}"
 
     return string
 
@@ -46,7 +152,7 @@ def to_attack_string(attack_bonuses: dict[str, int]) -> str:
         bab -= 5
         attacks.append(attack_bonus - (len(attacks) * 5))
 
-    return "/".join(f"{attack:+d}" for attack in attacks)
+    return "/".join(f"{int(attack):+d}" for attack in attacks)
 
 
 class CustomEffect(Effect):
@@ -58,6 +164,7 @@ class CustomEffect(Effect):
         statistics: dict[Statistic, int],
         saves: dict[Save, int],
         ac_bonuses: dict[ArmorBonus, int] = None,
+        size_change: int = 0,
     ):
         super().__init__(name=name)
         self._attack_bonus = attack_bonus
@@ -65,6 +172,7 @@ class CustomEffect(Effect):
         self._statistics = statistics
         self._saves = saves
         self._ac_bonuses = ac_bonuses or {}
+        self._size_change = size_change
 
     def armour_class_bonus(self, character):
         return self._ac_bonuses.copy()
@@ -78,13 +186,19 @@ class CustomEffect(Effect):
     def damage_bonus(self, character: "Character") -> list[Dice]:
         bonus = super().damage_bonus(character)
         if bonus:
-            bonus[0].modifier += self._damage_bonus
+            bonus = [
+                Dice(num=d.num, sides=d.sides, modifier=d.modifier + self._damage_bonus)
+                for d in bonus
+            ]
         elif self._damage_bonus:
             bonus.append(Dice(self._damage_bonus))
         return bonus
 
     def saves_bonuses(self, character: "Character") -> dict[Save, int]:
         return self._saves.copy()
+
+    def size_change(self, character: "Character") -> int:
+        return self._size_change
 
 
 def create_status_effect(
@@ -94,6 +208,7 @@ def create_status_effect(
     statistics: dict[Statistic, int] = None,
     saves: dict[Save, int] = None,
     ac_bonuses: dict[ArmorBonus, int] = None,
+    size_change: int = 0,
 ) -> "Effect":
     return CustomEffect(
         name,
@@ -102,6 +217,7 @@ def create_status_effect(
         statistics or {},
         saves or {},
         ac_bonuses or {},
+        size_change,
     )
 
 
